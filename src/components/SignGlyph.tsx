@@ -59,7 +59,7 @@ export function SignGlyph({
       aria-hidden
       className={cn(
         "flex size-16 shrink-0 items-center justify-center border-4",
-        categoryStyles[category] ?? categoryStyles.Informational,
+        categoryStyles[category] ?? categoryStyles["Informational"],
         className,
       )}
     >
