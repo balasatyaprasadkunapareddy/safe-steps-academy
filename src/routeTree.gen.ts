@@ -18,6 +18,7 @@ import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedQuizRouteImport } from './routes/_authenticated/quiz'
 import { Route as AuthenticatedSignsRouteImport } from './routes/_authenticated/signs'
 import { Route as AuthenticatedSurveyRouteImport } from './routes/_authenticated/survey'
+import { Route as AuthenticatedTeacherRouteImport } from './routes/_authenticated/teacher'
 import { Route as AuthenticatedLessonsIndexRouteImport } from './routes/_authenticated/lessons.index'
 import { Route as AuthenticatedLessonsLessonIdRouteImport } from './routes/_authenticated/lessons.$lessonId'
 
@@ -67,6 +68,11 @@ const AuthenticatedSurveyRoute = AuthenticatedSurveyRouteImport.update({
   path: '/survey',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeacherRoute = AuthenticatedTeacherRouteImport.update({
+  id: '/teacher',
+  path: '/teacher',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLessonsIndexRoute =
   AuthenticatedLessonsIndexRouteImport.update({
     id: '/lessons/',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/quiz': typeof AuthenticatedQuizRoute
   '/signs': typeof AuthenticatedSignsRoute
   '/survey': typeof AuthenticatedSurveyRoute
+  '/teacher': typeof AuthenticatedTeacherRoute
   '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/quiz': typeof AuthenticatedQuizRoute
   '/signs': typeof AuthenticatedSignsRoute
   '/survey': typeof AuthenticatedSurveyRoute
+  '/teacher': typeof AuthenticatedTeacherRoute
   '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/lessons': typeof AuthenticatedLessonsIndexRoute
 }
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/quiz': typeof AuthenticatedQuizRoute
   '/_authenticated/signs': typeof AuthenticatedSignsRoute
   '/_authenticated/survey': typeof AuthenticatedSurveyRoute
+  '/_authenticated/teacher': typeof AuthenticatedTeacherRoute
   '/_authenticated/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/_authenticated/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/quiz'
     | '/signs'
     | '/survey'
+    | '/teacher'
     | '/lessons/$lessonId'
     | '/lessons/'
   fileRoutesByTo: FileRoutesByTo
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/quiz'
     | '/signs'
     | '/survey'
+    | '/teacher'
     | '/lessons/$lessonId'
     | '/lessons'
   id:
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quiz'
     | '/_authenticated/signs'
     | '/_authenticated/survey'
+    | '/_authenticated/teacher'
     | '/_authenticated/lessons/$lessonId'
     | '/_authenticated/lessons/'
   fileRoutesById: FileRoutesById
@@ -229,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSurveyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/teacher': {
+      id: '/_authenticated/teacher'
+      path: '/teacher'
+      fullPath: '/teacher'
+      preLoaderRoute: typeof AuthenticatedTeacherRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lessons/': {
       id: '/_authenticated/lessons/'
       path: '/lessons'
@@ -253,6 +272,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQuizRoute: typeof AuthenticatedQuizRoute
   AuthenticatedSignsRoute: typeof AuthenticatedSignsRoute
   AuthenticatedSurveyRoute: typeof AuthenticatedSurveyRoute
+  AuthenticatedTeacherRoute: typeof AuthenticatedTeacherRoute
   AuthenticatedLessonsLessonIdRoute: typeof AuthenticatedLessonsLessonIdRoute
   AuthenticatedLessonsIndexRoute: typeof AuthenticatedLessonsIndexRoute
 }
@@ -264,6 +284,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQuizRoute: AuthenticatedQuizRoute,
   AuthenticatedSignsRoute: AuthenticatedSignsRoute,
   AuthenticatedSurveyRoute: AuthenticatedSurveyRoute,
+  AuthenticatedTeacherRoute: AuthenticatedTeacherRoute,
   AuthenticatedLessonsLessonIdRoute: AuthenticatedLessonsLessonIdRoute,
   AuthenticatedLessonsIndexRoute: AuthenticatedLessonsIndexRoute,
 }
