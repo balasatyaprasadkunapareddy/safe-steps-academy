@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedQuizRouteImport } from './routes/_authenticated/quiz'
 import { Route as AuthenticatedSignsRouteImport } from './routes/_authenticated/signs'
+import { Route as AuthenticatedSurveyRouteImport } from './routes/_authenticated/survey'
 import { Route as AuthenticatedLessonsIndexRouteImport } from './routes/_authenticated/lessons.index'
 import { Route as AuthenticatedLessonsLessonIdRouteImport } from './routes/_authenticated/lessons.$lessonId'
 
@@ -37,6 +39,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLeaderboardRoute =
+  AuthenticatedLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedQuizRoute = AuthenticatedQuizRouteImport.update({
   id: '/quiz',
   path: '/quiz',
@@ -45,6 +53,11 @@ const AuthenticatedQuizRoute = AuthenticatedQuizRouteImport.update({
 const AuthenticatedSignsRoute = AuthenticatedSignsRouteImport.update({
   id: '/signs',
   path: '/signs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSurveyRoute = AuthenticatedSurveyRouteImport.update({
+  id: '/survey',
+  path: '/survey',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLessonsIndexRoute =
@@ -64,8 +77,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/quiz': typeof AuthenticatedQuizRoute
   '/signs': typeof AuthenticatedSignsRoute
+  '/survey': typeof AuthenticatedSurveyRoute
   '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
@@ -73,8 +88,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/quiz': typeof AuthenticatedQuizRoute
   '/signs': typeof AuthenticatedSignsRoute
+  '/survey': typeof AuthenticatedSurveyRoute
   '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/lessons': typeof AuthenticatedLessonsIndexRoute
 }
@@ -84,8 +101,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/quiz': typeof AuthenticatedQuizRoute
   '/_authenticated/signs': typeof AuthenticatedSignsRoute
+  '/_authenticated/survey': typeof AuthenticatedSurveyRoute
   '/_authenticated/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
   '/_authenticated/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
@@ -95,8 +114,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/leaderboard'
     | '/quiz'
     | '/signs'
+    | '/survey'
     | '/lessons/$lessonId'
     | '/lessons/'
   fileRoutesByTo: FileRoutesByTo
@@ -104,8 +125,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/leaderboard'
     | '/quiz'
     | '/signs'
+    | '/survey'
     | '/lessons/$lessonId'
     | '/lessons'
   id:
@@ -114,8 +137,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/leaderboard'
     | '/_authenticated/quiz'
     | '/_authenticated/signs'
+    | '/_authenticated/survey'
     | '/_authenticated/lessons/$lessonId'
     | '/_authenticated/lessons/'
   fileRoutesById: FileRoutesById
@@ -156,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/leaderboard': {
+      id: '/_authenticated/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/quiz': {
       id: '/_authenticated/quiz'
       path: '/quiz'
@@ -168,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/signs'
       fullPath: '/signs'
       preLoaderRoute: typeof AuthenticatedSignsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/survey': {
+      id: '/_authenticated/survey'
+      path: '/survey'
+      fullPath: '/survey'
+      preLoaderRoute: typeof AuthenticatedSurveyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lessons/': {
@@ -189,16 +228,20 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedQuizRoute: typeof AuthenticatedQuizRoute
   AuthenticatedSignsRoute: typeof AuthenticatedSignsRoute
+  AuthenticatedSurveyRoute: typeof AuthenticatedSurveyRoute
   AuthenticatedLessonsLessonIdRoute: typeof AuthenticatedLessonsLessonIdRoute
   AuthenticatedLessonsIndexRoute: typeof AuthenticatedLessonsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedQuizRoute: AuthenticatedQuizRoute,
   AuthenticatedSignsRoute: AuthenticatedSignsRoute,
+  AuthenticatedSurveyRoute: AuthenticatedSurveyRoute,
   AuthenticatedLessonsLessonIdRoute: AuthenticatedLessonsLessonIdRoute,
   AuthenticatedLessonsIndexRoute: AuthenticatedLessonsIndexRoute,
 }
