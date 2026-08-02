@@ -6,7 +6,7 @@ import { Card, Chip, EmptyState, Spinner } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import { lessonImage } from "@/lib/safesteps";
 
-export const Route = createFileRoute("/_authenticated/lessons")({
+export const Route = createFileRoute("/_authenticated/lessons/")({
   head: () => ({
     meta: [
       { title: "Safety Lessons — SafeSteps" },

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLessonsIndexRouteImport } from './routes/_authenticated/lessons.index'
+import { Route as AuthenticatedLessonsLessonIdRouteImport } from './routes/_authenticated/lessons.$lessonId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +35,32 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLessonsIndexRoute =
+  AuthenticatedLessonsIndexRouteImport.update({
+    id: '/lessons/',
+    path: '/lessons/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLessonsLessonIdRoute =
+  AuthenticatedLessonsLessonIdRouteImport.update({
+    id: '/lessons/$lessonId',
+    path: '/lessons/$lessonId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
+  '/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
+  '/lessons': typeof AuthenticatedLessonsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,14 +68,22 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/lessons/$lessonId': typeof AuthenticatedLessonsLessonIdRoute
+  '/_authenticated/lessons/': typeof AuthenticatedLessonsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/lessons/$lessonId' | '/lessons/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
+  to: '/' | '/auth' | '/dashboard' | '/lessons/$lessonId' | '/lessons'
   id:
-    '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/dashboard'
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/lessons/$lessonId'
+    | '/_authenticated/lessons/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -96,15 +122,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lessons/': {
+      id: '/_authenticated/lessons/'
+      path: '/lessons'
+      fullPath: '/lessons/'
+      preLoaderRoute: typeof AuthenticatedLessonsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lessons/$lessonId': {
+      id: '/_authenticated/lessons/$lessonId'
+      path: '/lessons/$lessonId'
+      fullPath: '/lessons/$lessonId'
+      preLoaderRoute: typeof AuthenticatedLessonsLessonIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLessonsLessonIdRoute: typeof AuthenticatedLessonsLessonIdRoute
+  AuthenticatedLessonsIndexRoute: typeof AuthenticatedLessonsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLessonsLessonIdRoute: AuthenticatedLessonsLessonIdRoute,
+  AuthenticatedLessonsIndexRoute: AuthenticatedLessonsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
