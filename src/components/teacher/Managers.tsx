@@ -73,7 +73,7 @@ export function LessonManager() {
     const { error } = editing
       ? await supabase.from("lessons").update(payload).eq("id", editing.id)
       : await supabase.from("lessons").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Lesson updated" : "Lesson added");
     setOpen(false);
     setEditing(null);
@@ -83,7 +83,7 @@ export function LessonManager() {
 
   async function remove(id: string) {
     const { error } = await supabase.from("lessons").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Lesson deleted");
     queryClient.invalidateQueries({ queryKey: ["lessons"] });
   }
@@ -230,7 +230,7 @@ export function QuestionManager() {
     const { error } = editing
       ? await supabase.from("quiz_questions").update(payload).eq("id", editing.id)
       : await supabase.from("quiz_questions").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Question updated" : "Question added");
     setOpen(false);
     setEditing(null);
@@ -240,7 +240,7 @@ export function QuestionManager() {
 
   async function remove(id: string) {
     const { error } = await supabase.from("quiz_questions").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Question deleted");
     queryClient.invalidateQueries({ queryKey: ["quiz-questions"] });
   }
@@ -372,13 +372,13 @@ export function BadgeManager() {
   });
 
   async function add() {
-    if (form.name.trim().length < 3) return toast.error("Badge name is required");
+    if (form.name.trim().length < 3) { toast.error("Badge name is required"); return; }
     const { error } = await supabase.from("badges").insert({
       name: form.name.trim().slice(0, 60),
       description: form.description.trim().slice(0, 200),
       min_xp: Number(form.min_xp) || 0,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Badge added");
     setForm({ name: "", description: "", min_xp: 0 });
     queryClient.invalidateQueries({ queryKey: ["badges"] });
@@ -386,7 +386,7 @@ export function BadgeManager() {
 
   async function remove(id: string) {
     const { error } = await supabase.from("badges").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Badge removed");
     queryClient.invalidateQueries({ queryKey: ["badges"] });
   }
