@@ -14,16 +14,269 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      badges: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          min_xp: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          min_xp?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          min_xp?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          image_key: string | null
+          order_index: number
+          summary: string
+          tips: string[]
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          image_key?: string | null
+          order_index?: number
+          summary: string
+          tips?: string[]
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_key?: string | null
+          order_index?: number
+          summary?: string
+          tips?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          class_name: string | null
+          created_at: string
+          full_name: string
+          id: string
+          school: string | null
+          xp: number
+        }
+        Insert: {
+          class_name?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          school?: string | null
+          xp?: number
+        }
+        Update: {
+          class_name?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          school?: string | null
+          xp?: number
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          category: string
+          correct_index: number
+          created_at: string
+          explanation: string
+          id: string
+          options: string[]
+          question: string
+        }
+        Insert: {
+          category?: string
+          correct_index?: number
+          created_at?: string
+          explanation?: string
+          id?: string
+          options: string[]
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_index?: number
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: string[]
+          question?: string
+        }
+        Relationships: []
+      }
+      survey_responses: {
+        Row: {
+          answers: Json
+          awareness_score: number
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          awareness_score?: number
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          awareness_score?: number
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      traffic_signs: {
+        Row: {
+          category: string
+          created_at: string
+          glyph: string
+          id: string
+          meaning: string
+          name: string
+          usage_note: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          glyph?: string
+          id?: string
+          meaning: string
+          name: string
+          usage_note: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          glyph?: string
+          id?: string
+          meaning?: string
+          name?: string
+          usage_note?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "teacher"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +403,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "teacher"],
+    },
   },
 } as const
