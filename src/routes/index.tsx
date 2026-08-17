@@ -79,7 +79,10 @@ function Landing() {
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
           <Link to="/auth">
-            <Button size="sm">Sign in</Button>
+            <Button size="sm" variant="ghost">Sign in</Button>
+          </Link>
+          <Link to="/auth" search={{ mode: "signup" }}>
+            <Button size="sm" variant="accent">Sign up free</Button>
           </Link>
         </div>
       </header>

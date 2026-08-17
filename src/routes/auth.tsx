@@ -1,4 +1,4 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -179,9 +179,16 @@ function AuthPage() {
               {isSignUp ? "Create account" : "Sign in"}
             </Button>
           </form>
-          <Button variant="ghost" onClick={() => setIsSignUp(!isSignUp)}>
-            {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-          </Button>
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-0.5 text-sm font-semibold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:shadow-soft active:scale-95"
+            >
+              {isSignUp ? "Sign in" : "Sign up"}
+            </button>
+          </p>
         </Card>
       </div>
     </div>
