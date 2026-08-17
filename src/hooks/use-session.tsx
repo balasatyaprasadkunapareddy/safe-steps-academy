@@ -18,6 +18,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    let mounted = true;
+
     const syncUserProfile = async (nextSession: Session | null) => {
       if (!nextSession?.user?.id) return;
 
@@ -31,9 +33,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // 1. Initial explicit session retrieval (critical for Capacitor cold launch)
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!mounted) return;
+      if (error) {
+        console.warn("[session] Error getting initial session", error);
+      }
+      setSession(data.session);
+      setLoading(false);
+      if (data.session) {
+        void syncUserProfile(data.session);
+      }
+    });
+
+    // 2. Auth state listener for sign in, sign out, token refresh
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      if (!mounted) return;
       setSession(next);
       setLoading(false);
+
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         void syncUserProfile(next);
         queryClient.invalidateQueries();
@@ -43,13 +61,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-      void syncUserProfile(data.session);
-    });
-
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   const value = useMemo(() => ({ session, loading }), [session, loading]);
@@ -99,8 +114,8 @@ export function useProfile() {
 
       const roleFromMetadata =
         typeof session?.user.user_metadata?.["role"] === "string" &&
-        (session.user.user_metadata["role"] === "teacher" ||
-          session.user.user_metadata["role"] === "student")
+          (session.user.user_metadata["role"] === "teacher" ||
+            session.user.user_metadata["role"] === "student")
           ? session.user.user_metadata["role"]
           : null;
       const roles = Array.from(

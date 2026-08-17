@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   BookOpen,
   ClipboardList,
@@ -11,6 +12,7 @@ import {
 
 import { Button, Card, Chip } from "@/components/ui-kit";
 import { ThemeToggle } from "@/components/AppShell";
+import { useSession } from "@/hooks/use-session";
 import heroImage from "@/assets/lesson-pedestrian.jpg";
 
 export const Route = createFileRoute("/")({
@@ -67,6 +69,16 @@ const features = [
 ];
 
 function Landing() {
+  const { session, loading } = useSession();
+  const navigate = useNavigate();
+
+  // Instantly redirect authenticated users to dashboard if session exists
+  useEffect(() => {
+    if (!loading && session) {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [session, loading, navigate]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex h-16 max-w-6xl items-center px-4">

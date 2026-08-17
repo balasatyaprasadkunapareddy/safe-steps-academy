@@ -7,14 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import { useAndroidBack } from "@/hooks/use-android-back";
+import { SessionProvider, useSession } from "@/hooks/use-session";
 
 import appCss from "../styles.css?url";
-
-import { SessionProvider } from "@/hooks/use-session";
 
 function NotFoundComponent() {
   return (
@@ -119,6 +118,26 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AppContent() {
+  const { loading } = useSession();
+
+  // Show a smooth native-style loader while checking storage/Supabase session on boot
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Outlet />
+      <Toaster position="top-center" richColors closeButton />
+    </>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useAndroidBack();
@@ -126,9 +145,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-center" richColors closeButton />
+        <AppContent />
       </SessionProvider>
     </QueryClientProvider>
   );
