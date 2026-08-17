@@ -14,10 +14,14 @@ export const Route = createFileRoute("/_authenticated/signs")({
       { title: "Indian Traffic Sign Library — SafeSteps" },
       {
         name: "description",
-        content: "Searchable library of Indian mandatory, warning and informational traffic signs with meaning and usage.",
+        content:
+          "Searchable library of Indian mandatory, warning and informational traffic signs with meaning and usage.",
       },
       { property: "og:title", content: "Indian Traffic Sign Library — SafeSteps" },
-      { property: "og:description", content: "Learn what every Indian traffic sign means and where it is used." },
+      {
+        property: "og:description",
+        content: "Learn what every Indian traffic sign means and where it is used.",
+      },
     ],
   }),
   component: SignsPage,
@@ -30,7 +34,11 @@ function SignsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["signs"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("traffic_signs").select("*").order("category").order("name");
+      const { data, error } = await supabase
+        .from("traffic_signs")
+        .select("*")
+        .order("category")
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -50,7 +58,9 @@ function SignsPage() {
   return (
     <div>
       <h1 className="font-display text-3xl font-bold">Traffic sign library</h1>
-      <p className="mt-2 text-muted-foreground">Search by name or meaning, or filter by sign category.</p>
+      <p className="mt-2 text-muted-foreground">
+        Search by name or meaning, or filter by sign category.
+      </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
@@ -88,7 +98,15 @@ function SignsPage() {
               <div className="flex items-start gap-4">
                 <SignGlyph glyph={sign.glyph} category={sign.category} />
                 <div className="min-w-0">
-                  <Chip tone={sign.category === "Mandatory" ? "danger" : sign.category === "Warning" ? "accent" : "primary"}>
+                  <Chip
+                    tone={
+                      sign.category === "Mandatory"
+                        ? "danger"
+                        : sign.category === "Warning"
+                          ? "accent"
+                          : "primary"
+                    }
+                  >
                     {sign.category}
                   </Chip>
                   <h2 className="mt-2 font-display text-lg font-semibold">{sign.name}</h2>

@@ -1,5 +1,12 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
@@ -28,8 +35,7 @@ export const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => (
@@ -60,18 +66,19 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
 );
 Input.displayName = "Input";
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  ({ className, ...props }, ref) => (
-    <textarea
-      ref={ref}
-      className={cn(
-        "w-full rounded-xl border border-input bg-card p-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30",
-        className,
-      )}
-      {...props}
-    />
-  ),
-);
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn(
+      "w-full rounded-xl border border-input bg-card p-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30",
+      className,
+    )}
+    {...props}
+  />
+));
 Textarea.displayName = "Textarea";
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
@@ -89,21 +96,29 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 Select.displayName = "Select";
 
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1.5 block text-sm font-medium text-foreground", className)} {...props} />;
+  return (
+    <label
+      className={cn("mb-1.5 block text-sm font-medium text-foreground", className)}
+      {...props}
+    />
+  );
 }
 
-const chipVariants = cva("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold", {
-  variants: {
-    tone: {
-      primary: "bg-primary-soft text-primary",
-      accent: "bg-accent-soft text-accent-foreground",
-      muted: "bg-muted text-muted-foreground",
-      success: "bg-success/15 text-success",
-      danger: "bg-destructive/15 text-destructive",
+const chipVariants = cva(
+  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+  {
+    variants: {
+      tone: {
+        primary: "bg-primary-soft text-primary",
+        accent: "bg-accent-soft text-accent-foreground",
+        muted: "bg-muted text-muted-foreground",
+        success: "bg-success/15 text-success",
+        danger: "bg-destructive/15 text-destructive",
+      },
     },
+    defaultVariants: { tone: "muted" },
   },
-  defaultVariants: { tone: "muted" },
-});
+);
 
 export function Chip({
   className,

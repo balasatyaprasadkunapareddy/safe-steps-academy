@@ -228,7 +228,6 @@ Documentation
 
 The final application should be clean, scalable, and ready for demonstration as a college community service project.
 
-
 ## Development
 
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).

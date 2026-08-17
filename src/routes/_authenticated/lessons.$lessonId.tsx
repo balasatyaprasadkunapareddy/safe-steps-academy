@@ -10,9 +10,15 @@ export const Route = createFileRoute("/_authenticated/lessons/$lessonId")({
   head: () => ({
     meta: [
       { title: "Lesson — SafeSteps" },
-      { name: "description", content: "A SafeSteps road safety lesson with illustrations and practical safety tips." },
+      {
+        name: "description",
+        content: "A SafeSteps road safety lesson with illustrations and practical safety tips.",
+      },
       { property: "og:title", content: "Lesson — SafeSteps" },
-      { property: "og:description", content: "Read this SafeSteps road safety lesson and its key tips." },
+      {
+        property: "og:description",
+        content: "Read this SafeSteps road safety lesson and its key tips.",
+      },
     ],
   }),
   component: LessonDetail,
@@ -24,18 +30,26 @@ function LessonDetail() {
   const { data, isLoading } = useQuery({
     queryKey: ["lesson", lessonId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("lessons").select("*").eq("id", lessonId).maybeSingle();
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("id", lessonId)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
   if (isLoading) return <Spinner label="Loading lesson" />;
-  if (!data) return <EmptyState title="Lesson not found" hint="It may have been removed by your teacher." />;
+  if (!data)
+    return <EmptyState title="Lesson not found" hint="It may have been removed by your teacher." />;
 
   return (
     <article className="mx-auto max-w-3xl">
-      <Link to="/lessons" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/lessons"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="size-4" /> All lessons
       </Link>
 

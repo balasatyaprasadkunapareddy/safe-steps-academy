@@ -10,9 +10,15 @@ export const Route = createFileRoute("/_authenticated/certificate")({
   head: () => ({
     meta: [
       { title: "Completion Certificate — SafeSteps" },
-      { name: "description", content: "Download your SafeSteps road safety completion certificate." },
+      {
+        name: "description",
+        content: "Download your SafeSteps road safety completion certificate.",
+      },
       { property: "og:title", content: "Completion Certificate — SafeSteps" },
-      { property: "og:description", content: "A printable certificate for completing the SafeSteps road safety programme." },
+      {
+        property: "og:description",
+        content: "A printable certificate for completing the SafeSteps road safety programme.",
+      },
     ],
   }),
   component: CertificatePage,
@@ -63,7 +69,9 @@ function CertificatePage() {
 
       <Card className="border-4 border-primary p-10 text-center">
         <ShieldCheck className="mx-auto size-12 text-primary" />
-        <p className="mt-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">Certificate of Completion</p>
+        <p className="mt-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          Certificate of Completion
+        </p>
         <h2 className="mt-6 font-display text-4xl font-extrabold">{me.profile?.full_name}</h2>
         <p className="mt-4 text-sm text-muted-foreground">
           has successfully completed the SafeSteps Traffic Safety Learning Programme
@@ -85,7 +93,9 @@ function CertificatePage() {
         <p className="mt-10 text-xs text-muted-foreground">
           {me.profile?.school || "School"} · Issued {new Date().toLocaleDateString()}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">SafeSteps — Road Safety Community Service Initiative</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          SafeSteps — Road Safety Community Service Initiative
+        </p>
       </Card>
     </div>
   );

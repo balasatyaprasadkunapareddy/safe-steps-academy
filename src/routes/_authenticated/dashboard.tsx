@@ -9,10 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SafeSteps" },
-      { name: "description", content: "Your road safety progress, XP, badges and quick links to lessons and quizzes." },
-      { property: "og:title", content: "Dashboard — SafeSteps" },
-      { property: "og:description", content: "Track your XP, badges and quiz history on SafeSteps." },
+      { title: "Dashboard ? SafeSteps" },
+      {
+        name: "description",
+        content: "Your road safety progress, XP, badges and quick links to lessons and quizzes.",
+      },
+      { property: "og:title", content: "Dashboard ? SafeSteps" },
+      {
+        property: "og:description",
+        content: "Track your XP, badges and quiz history on SafeSteps.",
+      },
     ],
   }),
   component: Dashboard,
@@ -50,9 +56,14 @@ function Dashboard() {
   if (isLoading || !data) return <Spinner label="Loading your dashboard" />;
 
   const xp = me?.profile?.xp ?? 0;
-  const nextBadge = data.badges.find((b) => b.min_xp > xp);
-  const currentBadge = [...data.badges].reverse().find((b) => b.min_xp <= xp);
-  const progressToNext = nextBadge ? (xp / nextBadge.min_xp) * 100 : 100;
+  const sortedBadges = [...data.badges].sort((a, b) => a.min_xp - b.min_xp);
+  const nextBadge = sortedBadges.find((badge) => badge.min_xp > xp);
+  const currentBadge = [...sortedBadges].reverse().find((badge) => badge.min_xp <= xp);
+  const startXp = currentBadge?.min_xp ?? 0;
+  const range = Math.max(1, (nextBadge?.min_xp ?? startXp + 1) - startXp);
+  const progressToNext = nextBadge
+    ? Math.min(100, Math.max(0, ((xp - startXp) / range) * 100))
+    : 100;
 
   return (
     <div className="space-y-8">
@@ -60,8 +71,10 @@ function Dashboard() {
         <p className="text-sm opacity-85">Welcome back,</p>
         <h1 className="mt-1 font-display text-3xl font-extrabold">{me?.profile?.full_name}</h1>
         <p className="mt-2 text-sm opacity-90">
-          {me?.profile?.school ? `${me.profile.school} · ` : ""}
-          {me?.profile?.class_name ? `Class ${me.profile.class_name}` : "Keep going — safety is a daily habit."}
+          {me?.profile?.school ? `${me.profile.school} ? ` : ""}
+          {me?.profile?.class_name
+            ? `Class ${me.profile.class_name}`
+            : "Keep going ? safety is a daily habit."}
         </p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -71,7 +84,9 @@ function Dashboard() {
           </div>
           <div className="rounded-2xl bg-background/15 p-4 backdrop-blur">
             <p className="text-xs uppercase tracking-wide opacity-80">Current badge</p>
-            <p className="font-display text-xl font-bold">{currentBadge?.name ?? "Not yet earned"}</p>
+            <p className="font-display text-xl font-bold">
+              {currentBadge?.name ?? "Not yet earned"}
+            </p>
           </div>
           <div className="rounded-2xl bg-background/15 p-4 backdrop-blur">
             <p className="text-xs uppercase tracking-wide opacity-80">Quizzes taken</p>
@@ -84,7 +99,8 @@ function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-display text-lg font-semibold">Progress to next badge</h2>
           <Chip tone="primary">
-            <Flame className="size-3.5" /> {nextBadge ? `${nextBadge.min_xp - xp} XP to ${nextBadge.name}` : "All badges unlocked"}
+            <Flame className="size-3.5" />{" "}
+            {nextBadge ? `${nextBadge.min_xp - xp} XP to ${nextBadge.name}` : "All badges unlocked"}
           </Chip>
         </div>
         <Progress value={progressToNext} className="mt-4" />
@@ -92,9 +108,24 @@ function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { to: "/lessons", icon: BookOpen, title: "Lessons", body: `${data.lessonCount} safety modules` },
-          { to: "/signs", icon: SignpostBig, title: "Traffic signs", body: "Search the sign library" },
-          { to: "/quiz", icon: ClipboardList, title: "Take a quiz", body: "Earn 10 XP per correct answer" },
+          {
+            to: "/lessons",
+            icon: BookOpen,
+            title: "Lessons",
+            body: `${data.lessonCount} safety modules`,
+          },
+          {
+            to: "/signs",
+            icon: SignpostBig,
+            title: "Traffic signs",
+            body: "Search the sign library",
+          },
+          {
+            to: "/quiz",
+            icon: ClipboardList,
+            title: "Take a quiz",
+            body: "Earn 10 XP per correct answer",
+          },
           { to: "/leaderboard", icon: Trophy, title: "Leaderboard", body: "See where you rank" },
         ].map((item) => (
           <Link key={item.to} to={item.to}>
@@ -118,12 +149,16 @@ function Dashboard() {
                   key={badge.id}
                   className={`flex items-center gap-3 rounded-2xl border p-3 ${earned ? "border-primary/40 bg-primary-soft" : "border-border opacity-60"}`}
                 >
-                  <Award className={`size-6 ${earned ? "text-primary" : "text-muted-foreground"}`} />
+                  <Award
+                    className={`size-6 ${earned ? "text-primary" : "text-muted-foreground"}`}
+                  />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{badge.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{badge.description}</p>
                   </div>
-                  <span className="ml-auto text-xs font-semibold text-muted-foreground">{badge.min_xp} XP</span>
+                  <span className="ml-auto text-xs font-semibold text-muted-foreground">
+                    {badge.min_xp} XP
+                  </span>
                 </div>
               );
             })}
@@ -133,11 +168,16 @@ function Dashboard() {
         <Card>
           <h2 className="font-display text-lg font-semibold">Recent quiz attempts</h2>
           {data.attempts.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No attempts yet — take your first quiz!</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              No attempts yet ? take your first quiz!
+            </p>
           ) : (
             <ul className="mt-4 space-y-3">
               {data.attempts.map((a) => (
-                <li key={a.id} className="flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm">
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm"
+                >
                   <span className="font-medium">{a.category}</span>
                   <span className="text-muted-foreground">
                     {new Date(a.created_at).toLocaleDateString()}

@@ -1,10 +1,12 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+﻿import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button, Card, Chip, Input, Label, Select, Spinner, Textarea } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/use-session";
+import { ensureProfileAndRole } from "@/lib/profile";
 
 type Lesson = {
   id: string;
@@ -17,6 +19,15 @@ type Lesson = {
   order_index: number;
 };
 
+type Question = {
+  id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+  category: string;
+};
+
 const emptyLesson = {
   title: "",
   category: "Pedestrian",
@@ -27,7 +38,16 @@ const emptyLesson = {
   order_index: 0,
 };
 
+const emptyQuestion = {
+  question: "",
+  options: ["", "", "", ""],
+  correct_index: 0,
+  explanation: "",
+  category: "General",
+};
+
 export function LessonManager() {
+  const { data: me } = useProfile();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Lesson | null>(null);
   const [form, setForm] = useState({ ...emptyLesson });
@@ -57,23 +77,44 @@ export function LessonManager() {
   }
 
   async function save() {
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before saving lesson", err);
+    }
+
     if (form.title.trim().length < 3 || form.summary.trim().length < 5) {
       toast.error("Title and summary are required");
       return;
     }
+
     const payload = {
       title: form.title.trim().slice(0, 120),
       category: form.category,
       summary: form.summary.trim().slice(0, 300),
       content: form.content.trim().slice(0, 4000),
-      tips: form.tips.split("\n").map((t) => t.trim()).filter(Boolean).slice(0, 10),
+      tips: form.tips
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 10),
       image_key: form.image_key,
       order_index: Number(form.order_index) || 0,
     };
+
     const { error } = editing
       ? await supabase.from("lessons").update(payload).eq("id", editing.id)
       : await supabase.from("lessons").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success(editing ? "Lesson updated" : "Lesson added");
     setOpen(false);
     setEditing(null);
@@ -82,8 +123,23 @@ export function LessonManager() {
   }
 
   async function remove(id: string) {
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before deleting lesson", err);
+    }
+
     const { error } = await supabase.from("lessons").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Lesson deleted");
     queryClient.invalidateQueries({ queryKey: ["lessons"] });
   }
@@ -111,33 +167,60 @@ export function LessonManager() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Title</Label>
-              <Input value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Input
+                value={form.title}
+                maxLength={120}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </div>
             <div>
               <Label>Category</Label>
-              <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              <Select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
                 {["Pedestrian", "Bicycle", "Two-Wheeler", "Vehicle"].map((c) => (
                   <option key={c}>{c}</option>
                 ))}
               </Select>
             </div>
           </div>
+
           <div>
             <Label>Summary</Label>
-            <Input value={form.summary} maxLength={300} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+            <Input
+              value={form.summary}
+              maxLength={300}
+              onChange={(e) => setForm({ ...form, summary: e.target.value })}
+            />
           </div>
+
           <div>
             <Label>Content</Label>
-            <Textarea rows={5} maxLength={4000} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
+            <Textarea
+              rows={5}
+              maxLength={4000}
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+            />
           </div>
+
           <div>
             <Label>Safety tips (one per line)</Label>
-            <Textarea rows={4} value={form.tips} onChange={(e) => setForm({ ...form, tips: e.target.value })} />
+            <Textarea
+              rows={4}
+              value={form.tips}
+              onChange={(e) => setForm({ ...form, tips: e.target.value })}
+            />
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Illustration</Label>
-              <Select value={form.image_key} onChange={(e) => setForm({ ...form, image_key: e.target.value })}>
+              <Select
+                value={form.image_key}
+                onChange={(e) => setForm({ ...form, image_key: e.target.value })}
+              >
                 {["pedestrian", "bicycle", "twowheeler", "bus"].map((c) => (
                   <option key={c}>{c}</option>
                 ))}
@@ -152,6 +235,7 @@ export function LessonManager() {
               />
             </div>
           </div>
+
           <div className="flex gap-2">
             <Button onClick={save}>{editing ? "Save changes" : "Add lesson"}</Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>
@@ -169,10 +253,20 @@ export function LessonManager() {
               <p className="truncate text-sm text-muted-foreground">{lesson.summary}</p>
             </div>
             <Chip tone="primary">{lesson.category}</Chip>
-            <Button size="icon" variant="ghost" onClick={() => startEdit(lesson)} aria-label="Edit lesson">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => startEdit(lesson)}
+              aria-label="Edit lesson"
+            >
               <Pencil className="size-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => remove(lesson.id)} aria-label="Delete lesson">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => remove(lesson.id)}
+              aria-label="Delete lesson"
+            >
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </Card>
@@ -182,25 +276,9 @@ export function LessonManager() {
   );
 }
 
-type Question = {
-  id: string;
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation: string;
-  category: string;
-};
-
-const emptyQuestion = {
-  question: "",
-  options: ["", "", "", ""],
-  correct_index: 0,
-  explanation: "",
-  category: "General",
-};
-
 export function QuestionManager() {
   const queryClient = useQueryClient();
+  const { data: me } = useProfile();
   const [editing, setEditing] = useState<Question | null>(null);
   const [form, setForm] = useState<typeof emptyQuestion>({ ...emptyQuestion });
   const [open, setOpen] = useState(false);
@@ -220,6 +298,18 @@ export function QuestionManager() {
       toast.error("A question and at least two options are required");
       return;
     }
+
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before saving question", err);
+    }
+
     const payload = {
       question: form.question.trim().slice(0, 300),
       options,
@@ -227,20 +317,40 @@ export function QuestionManager() {
       explanation: form.explanation.trim().slice(0, 500),
       category: form.category.trim().slice(0, 40) || "General",
     };
+
     const { error } = editing
       ? await supabase.from("quiz_questions").update(payload).eq("id", editing.id)
       : await supabase.from("quiz_questions").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success(editing ? "Question updated" : "Question added");
     setOpen(false);
     setEditing(null);
-    setForm({ ...emptyQuestion, options: ["", "", "", ""] });
+    setForm({ ...emptyQuestion });
     queryClient.invalidateQueries({ queryKey: ["quiz-questions"] });
   }
 
   async function remove(id: string) {
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before deleting question", err);
+    }
+
     const { error } = await supabase.from("quiz_questions").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Question deleted");
     queryClient.invalidateQueries({ queryKey: ["quiz-questions"] });
   }
@@ -255,7 +365,7 @@ export function QuestionManager() {
           size="sm"
           onClick={() => {
             setEditing(null);
-            setForm({ ...emptyQuestion, options: ["", "", "", ""] });
+            setForm({ ...emptyQuestion });
             setOpen((v) => !v);
           }}
         >
@@ -267,8 +377,13 @@ export function QuestionManager() {
         <Card className="space-y-3">
           <div>
             <Label>Question</Label>
-            <Input value={form.question} maxLength={300} onChange={(e) => setForm({ ...form, question: e.target.value })} />
+            <Input
+              value={form.question}
+              maxLength={300}
+              onChange={(e) => setForm({ ...form, question: e.target.value })}
+            />
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             {form.options.map((option, i) => (
               <div key={i}>
@@ -297,10 +412,15 @@ export function QuestionManager() {
               </div>
             ))}
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Category</Label>
-              <Input value={form.category} maxLength={40} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <Input
+                value={form.category}
+                maxLength={40}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              />
             </div>
             <div>
               <Label>Explanation</Label>
@@ -311,6 +431,7 @@ export function QuestionManager() {
               />
             </div>
           </div>
+
           <div className="flex gap-2">
             <Button onClick={save}>{editing ? "Save changes" : "Add question"}</Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>
@@ -348,7 +469,12 @@ export function QuestionManager() {
             >
               <Pencil className="size-4" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => remove(q.id)} aria-label="Delete question">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => remove(q.id)}
+              aria-label="Delete question"
+            >
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </Card>
@@ -361,6 +487,7 @@ export function QuestionManager() {
 export function BadgeManager() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", description: "", min_xp: 0 });
+  const { data: me } = useProfile();
 
   const { data } = useQuery({
     queryKey: ["badges"],
@@ -372,21 +499,55 @@ export function BadgeManager() {
   });
 
   async function add() {
-    if (form.name.trim().length < 3) { toast.error("Badge name is required"); return; }
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before adding badge", err);
+    }
+
+    if (form.name.trim().length < 3) {
+      toast.error("Badge name is required");
+      return;
+    }
+
     const { error } = await supabase.from("badges").insert({
       name: form.name.trim().slice(0, 60),
       description: form.description.trim().slice(0, 200),
       min_xp: Number(form.min_xp) || 0,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Badge added");
     setForm({ name: "", description: "", min_xp: 0 });
     queryClient.invalidateQueries({ queryKey: ["badges"] });
   }
 
   async function remove(id: string) {
+    try {
+      const userId = me?.profile?.id;
+      if (!userId) {
+        toast.error("Unable to verify teacher identity");
+        return;
+      }
+      await ensureProfileAndRole(userId, { role: "teacher" });
+    } catch (err) {
+      console.warn("Could not sync teacher role before deleting badge", err);
+    }
+
     const { error } = await supabase.from("badges").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success("Badge removed");
     queryClient.invalidateQueries({ queryKey: ["badges"] });
   }
@@ -397,7 +558,11 @@ export function BadgeManager() {
       <Card className="grid gap-3 sm:grid-cols-4">
         <div className="sm:col-span-1">
           <Label>Name</Label>
-          <Input value={form.name} maxLength={60} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input
+            value={form.name}
+            maxLength={60}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
         </div>
         <div className="sm:col-span-2">
           <Label>Description</Label>
@@ -410,7 +575,11 @@ export function BadgeManager() {
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <Label>Min XP</Label>
-            <Input type="number" value={form.min_xp} onChange={(e) => setForm({ ...form, min_xp: Number(e.target.value) })} />
+            <Input
+              type="number"
+              value={form.min_xp}
+              onChange={(e) => setForm({ ...form, min_xp: Number(e.target.value) })}
+            />
           </div>
           <Button onClick={add}>Add</Button>
         </div>
@@ -424,7 +593,12 @@ export function BadgeManager() {
               <p className="truncate text-sm text-muted-foreground">{badge.description}</p>
             </div>
             <Chip tone="primary">{badge.min_xp} XP</Chip>
-            <Button size="icon" variant="ghost" onClick={() => remove(badge.id)} aria-label="Delete badge">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => remove(badge.id)}
+              aria-label="Delete badge"
+            >
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </Card>

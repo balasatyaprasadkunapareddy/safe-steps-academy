@@ -14,9 +14,16 @@ export const Route = createFileRoute("/_authenticated/survey")({
   head: () => ({
     meta: [
       { title: "Traffic Awareness Survey — SafeSteps" },
-      { name: "description", content: "Answer the community traffic awareness survey and get your personal awareness score." },
+      {
+        name: "description",
+        content:
+          "Answer the community traffic awareness survey and get your personal awareness score.",
+      },
       { property: "og:title", content: "Traffic Awareness Survey — SafeSteps" },
-      { property: "og:description", content: "Contribute to your school's road safety awareness study." },
+      {
+        property: "og:description",
+        content: "Contribute to your school's road safety awareness study.",
+      },
     ],
   }),
   component: SurveyPage,
@@ -84,7 +91,8 @@ function SurveyPage() {
               <p className="font-semibold text-primary">You have already submitted the survey</p>
               <p className="text-sm text-muted-foreground">
                 Your awareness score was {existing.awareness_score}% on{" "}
-                {new Date(existing.created_at).toLocaleDateString()}. You may submit an updated response below.
+                {new Date(existing.created_at).toLocaleDateString()}. You may submit an updated
+                response below.
               </p>
             </div>
           </div>

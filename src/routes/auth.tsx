@@ -1,11 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button, Card, Input, Label, Select } from "@/components/ui-kit";
-import { useSession } from "@/hooks/use-session";
+import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({
@@ -16,10 +16,17 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — SafeSteps" },
-      { name: "description", content: "Sign in or register as a student or teacher on the SafeSteps road safety platform." },
-      { property: "og:title", content: "Sign in — SafeSteps" },
-      { property: "og:description", content: "Access your SafeSteps road safety lessons, quizzes and badges." },
+      { title: "Sign in ? SafeSteps" },
+      {
+        name: "description",
+        content:
+          "Sign in or register as a student or teacher on the SafeSteps road safety platform.",
+      },
+      { property: "og:title", content: "Sign in ? SafeSteps" },
+      {
+        property: "og:description",
+        content: "Access your SafeSteps road safety lessons, quizzes and badges.",
+      },
     ],
   }),
   component: AuthPage,
@@ -34,6 +41,7 @@ function AuthPage() {
   const { mode } = Route.useSearch();
   const navigate = useNavigate();
   const { session } = useSession();
+  const { data: me } = useProfile();
   const [isSignUp, setIsSignUp] = useState(mode === "signup");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -46,8 +54,11 @@ function AuthPage() {
   });
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard", replace: true });
-  }, [session, navigate]);
+    if (!session) return;
+
+    const isTeacher = me?.isTeacher || session.user.user_metadata?.["role"] === "teacher";
+    navigate({ to: isTeacher ? "/teacher" : "/dashboard", replace: true });
+  }, [session, me?.isTeacher, navigate]);
 
   function update(key: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -109,99 +120,68 @@ function AuthPage() {
             Learn the road. Respect the road. Stay safe.
           </h2>
           <p className="mt-4 max-w-sm text-sm opacity-90">
-            Lessons, traffic signs, quizzes and badges — designed for school students and their teachers.
+            Lessons, traffic signs, quizzes and badges ? designed for school students and their
+            teachers.
           </p>
         </div>
-        <p className="text-xs opacity-75">A community service initiative on road safety awareness.</p>
+        <p className="text-xs opacity-75">
+          A community service initiative on road safety awareness.
+        </p>
       </div>
-
-      <div className="flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md animate-rise">
-          <h1 className="font-display text-2xl font-bold">{isSignUp ? "Create your account" : "Welcome back"}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isSignUp ? "Register as a student or teacher." : "Sign in to continue your safety journey."}
-          </p>
-
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      <div className="p-12">
+        <Card className="max-w-lg">
+          <h1 className="font-display text-2xl font-bold mb-6">
+            {isSignUp ? "Create an account" : "Sign in"}
+          </h1>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <Input value={form.email} onChange={(e) => update("email", e.target.value)} />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+              />
+            </div>
             {isSignUp && (
               <>
                 <div>
-                  <Label htmlFor="full_name">Full name</Label>
+                  <Label>Full name</Label>
                   <Input
-                    id="full_name"
-                    maxLength={80}
                     value={form.full_name}
                     onChange={(e) => update("full_name", e.target.value)}
-                    placeholder="Aarav Sharma"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="school">School</Label>
-                    <Input
-                      id="school"
-                      maxLength={120}
-                      value={form.school}
-                      onChange={(e) => update("school", e.target.value)}
-                      placeholder="City Public School"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="class_name">Class</Label>
-                    <Input
-                      id="class_name"
-                      maxLength={20}
-                      value={form.class_name}
-                      onChange={(e) => update("class_name", e.target.value)}
-                      placeholder="8-B"
-                    />
-                  </div>
+                <div>
+                  <Label>School</Label>
+                  <Input value={form.school} onChange={(e) => update("school", e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="role">I am a</Label>
-                  <Select id="role" value={form.role} onChange={(e) => update("role", e.target.value)}>
+                  <Label>Class</Label>
+                  <Input
+                    value={form.class_name}
+                    onChange={(e) => update("class_name", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select value={form.role} onChange={(e) => update("role", e.target.value)}>
                     <option value="student">Student</option>
                     <option value="teacher">Teacher</option>
                   </Select>
                 </div>
               </>
             )}
-
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="you@school.edu"
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                value={form.password}
-                onChange={(e) => update("password", e.target.value)}
-                placeholder="At least 6 characters"
-              />
-            </div>
-
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
+            <Button type="submit" disabled={loading}>
+              {isSignUp ? "Create account" : "Sign in"}
             </Button>
           </form>
-
-          <button
-            type="button"
-            className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
-            onClick={() => setIsSignUp((v) => !v)}
-          >
-            {isSignUp ? "Already registered? Sign in" : "New here? Create a student account"}
-          </button>
+          <Button variant="ghost" onClick={() => setIsSignUp(!isSignUp)}>
+            {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
+          </Button>
         </Card>
       </div>
     </div>

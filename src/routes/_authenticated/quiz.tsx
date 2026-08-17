@@ -15,9 +15,16 @@ export const Route = createFileRoute("/_authenticated/quiz")({
   head: () => ({
     meta: [
       { title: "Road Safety Quiz — SafeSteps" },
-      { name: "description", content: "Multiple-choice road safety quiz with instant feedback, explanations and XP rewards." },
+      {
+        name: "description",
+        content:
+          "Multiple-choice road safety quiz with instant feedback, explanations and XP rewards.",
+      },
       { property: "og:title", content: "Road Safety Quiz — SafeSteps" },
-      { property: "og:description", content: "Test your traffic safety knowledge and earn XP and badges." },
+      {
+        property: "og:description",
+        content: "Test your traffic safety knowledge and earn XP and badges.",
+      },
     ],
   }),
   component: QuizPage,
@@ -58,7 +65,10 @@ function QuizPage() {
   }, [data, category, seed]);
 
   if (isLoading) return <Spinner label="Loading questions" />;
-  if (!data?.length) return <EmptyState title="No quiz questions yet" hint="Your teacher will add questions soon." />;
+  if (!data?.length)
+    return (
+      <EmptyState title="No quiz questions yet" hint="Your teacher will add questions soon." />
+    );
 
   function reset(newCategory = category) {
     setCategory(newCategory);
@@ -114,7 +124,12 @@ function QuizPage() {
           <p className="text-sm font-semibold">Choose a topic</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {categories.map((c) => (
-              <Button key={c} size="sm" variant={category === c ? "primary" : "outline"} onClick={() => reset(c)}>
+              <Button
+                key={c}
+                size="sm"
+                variant={category === c ? "primary" : "outline"}
+                onClick={() => reset(c)}
+              >
                 {c}
               </Button>
             ))}
@@ -193,7 +208,9 @@ function QuizPage() {
                 </span>
                 {option}
                 {answered && isCorrect && <CheckCircle2 className="ml-auto size-5 text-success" />}
-                {answered && isPicked && !isCorrect && <XCircle className="ml-auto size-5 text-destructive" />}
+                {answered && isPicked && !isCorrect && (
+                  <XCircle className="ml-auto size-5 text-destructive" />
+                )}
               </button>
             );
           })}
@@ -201,7 +218,9 @@ function QuizPage() {
 
         {answered && (
           <div className="mt-5 rounded-2xl bg-muted p-4 text-sm">
-            <p className="font-semibold">{selected === q.correct_index ? "Correct!" : "Not quite."}</p>
+            <p className="font-semibold">
+              {selected === q.correct_index ? "Correct!" : "Not quite."}
+            </p>
             <p className="mt-1 text-muted-foreground">{q.explanation}</p>
           </div>
         )}

@@ -10,9 +10,16 @@ export const Route = createFileRoute("/_authenticated/lessons/")({
   head: () => ({
     meta: [
       { title: "Safety Lessons — SafeSteps" },
-      { name: "description", content: "Pedestrian, bicycle, two-wheeler and school bus safety lessons with practical tips." },
+      {
+        name: "description",
+        content:
+          "Pedestrian, bicycle, two-wheeler and school bus safety lessons with practical tips.",
+      },
       { property: "og:title", content: "Safety Lessons — SafeSteps" },
-      { property: "og:description", content: "Learn road safety with illustrated lessons written for school students." },
+      {
+        property: "og:description",
+        content: "Learn road safety with illustrated lessons written for school students.",
+      },
     ],
   }),
   component: LessonsPage,
@@ -29,12 +36,15 @@ function LessonsPage() {
   });
 
   if (isLoading) return <Spinner label="Loading lessons" />;
-  if (!data?.length) return <EmptyState title="No lessons yet" hint="Your teacher will add lessons soon." />;
+  if (!data?.length)
+    return <EmptyState title="No lessons yet" hint="Your teacher will add lessons soon." />;
 
   return (
     <div>
       <h1 className="font-display text-3xl font-bold">Learning modules</h1>
-      <p className="mt-2 text-muted-foreground">Four core modules that cover how students travel every day.</p>
+      <p className="mt-2 text-muted-foreground">
+        Four core modules that cover how students travel every day.
+      </p>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         {data.map((lesson) => (

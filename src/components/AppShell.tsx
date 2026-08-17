@@ -30,12 +30,16 @@ const studentNav = [
   { to: "/survey", label: "Survey", icon: ShieldCheck },
 ] as const;
 
+const teacherNav = [{ to: "/teacher", label: "Teacher Dashboard", icon: GraduationCap }] as const;
+
 export function useTheme() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("safesteps-theme");
-    const isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = stored
+      ? stored === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
@@ -67,9 +71,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const nav = data?.isTeacher
-    ? [{ to: "/teacher", label: "Teacher", icon: GraduationCap } as const, ...studentNav]
-    : studentNav;
+  const nav = data?.isTeacher ? teacherNav : studentNav;
+  const homePath = data?.isTeacher ? "/teacher" : "/dashboard";
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -82,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       <header className="no-print sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-          <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-bold">
+          <Link to={homePath} className="flex items-center gap-2 font-display text-lg font-bold">
             <span className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
               <ShieldCheck className="size-5" />
             </span>
@@ -123,7 +126,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <div className={cn("border-t border-border px-4 py-3 lg:hidden", open ? "block" : "hidden")}>
+        <div
+          className={cn("border-t border-border px-4 py-3 lg:hidden", open ? "block" : "hidden")}
+        >
           <div className="grid grid-cols-2 gap-2">
             {nav.map((item) => (
               <Link

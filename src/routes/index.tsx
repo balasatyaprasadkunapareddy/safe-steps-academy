@@ -34,12 +34,36 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
-  { icon: BookOpen, title: "Guided lessons", body: "Pedestrian, bicycle, two-wheeler and school bus safety with practical tips." },
-  { icon: SignpostBig, title: "Sign library", body: "Searchable Indian traffic signs grouped as mandatory, warning and informational." },
-  { icon: ClipboardList, title: "Smart quizzes", body: "Instant feedback and clear explanations after every question." },
-  { icon: Medal, title: "Badges & XP", body: "Earn XP for every correct answer and unlock five achievement badges." },
-  { icon: BarChart3, title: "Survey analytics", body: "Teachers see awareness scores in live pie and bar charts." },
-  { icon: ShieldCheck, title: "Certificates", body: "Students download a completion certificate for their portfolio." },
+  {
+    icon: BookOpen,
+    title: "Guided lessons",
+    body: "Pedestrian, bicycle, two-wheeler and school bus safety with practical tips.",
+  },
+  {
+    icon: SignpostBig,
+    title: "Sign library",
+    body: "Searchable Indian traffic signs grouped as mandatory, warning and informational.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Smart quizzes",
+    body: "Instant feedback and clear explanations after every question.",
+  },
+  {
+    icon: Medal,
+    title: "Badges & XP",
+    body: "Earn XP for every correct answer and unlock five achievement badges.",
+  },
+  {
+    icon: BarChart3,
+    title: "Survey analytics",
+    body: "Teachers see awareness scores in live pie and bar charts.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Certificates",
+    body: "Students download a completion certificate for their portfolio.",
+  },
 ];
 
 function Landing() {
@@ -67,9 +91,9 @@ function Landing() {
             Every safe journey starts with a <span className="text-primary">SafeStep</span>.
           </h1>
           <p className="mt-5 max-w-xl text-base text-muted-foreground">
-            A traffic safety learning platform built for school students — interactive lessons, the Indian
-            traffic sign library, quizzes with instant feedback, badges, leaderboards and awareness analytics
-            for teachers.
+            A traffic safety learning platform built for school students — interactive lessons, the
+            Indian traffic sign library, quizzes with instant feedback, badges, leaderboards and
+            awareness analytics for teachers.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/auth">

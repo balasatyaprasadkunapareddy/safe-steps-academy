@@ -34,7 +34,12 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: "crossing",
     question: "Where do you usually cross the road near your school?",
-    options: ["Zebra crossing / signal", "Wherever it is shortest", "Between parked vehicles", "I do not cross roads"],
+    options: [
+      "Zebra crossing / signal",
+      "Wherever it is shortest",
+      "Between parked vehicles",
+      "I do not cross roads",
+    ],
     awareIndex: 0,
   },
   {
