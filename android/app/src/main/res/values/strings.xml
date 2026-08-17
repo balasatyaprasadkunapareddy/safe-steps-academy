@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name"> SafeSteps</string>
+    <string name="title_activity_main"> SafeSteps</string>
+    <string name="package_name">com.safesteps.academy</string>
+    <string name="custom_url_scheme">com.safesteps.academy</string>
+</resources>
