@@ -9,12 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard ? SafeSteps" },
+      { title: "Dashboard — SafeSteps" },
       {
         name: "description",
         content: "Your road safety progress, XP, badges and quick links to lessons and quizzes.",
       },
-      { property: "og:title", content: "Dashboard ? SafeSteps" },
+      { property: "og:title", content: "Dashboard — SafeSteps" },
       {
         property: "og:description",
         content: "Track your XP, badges and quiz history on SafeSteps.",
@@ -66,47 +66,52 @@ function Dashboard() {
     : 100;
 
   return (
-    <div className="space-y-8">
-      <section className="animate-rise gradient-hero rounded-3xl p-8 text-primary-foreground shadow-lift">
+    <div className="space-y-8 animate-fade-in page-transition">
+      {/* Hero Section */}
+      <section className="animate-rise gradient-hero rounded-3xl p-8 text-primary-foreground shadow-lift transition-all duration-300">
         <p className="text-sm opacity-85">Welcome back,</p>
-        <h1 className="mt-1 font-display text-3xl font-extrabold">{me?.profile?.full_name}</h1>
+        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+          {me?.profile?.full_name}
+        </h1>
         <p className="mt-2 text-sm opacity-90">
-          {me?.profile?.school ? `${me.profile.school} ? ` : ""}
+          {me?.profile?.school ? `${me.profile.school} · ` : ""}
           {me?.profile?.class_name
             ? `Class ${me.profile.class_name}`
-            : "Keep going ? safety is a daily habit."}
+            : "Keep going — safety is a daily habit."}
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3 animate-cascade">
+          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur transition-transform active:scale-95">
             <p className="text-xs uppercase tracking-wide opacity-80">Total XP</p>
             <p className="font-display text-3xl font-bold">{xp}</p>
           </div>
-          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur">
+          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur transition-transform active:scale-95">
             <p className="text-xs uppercase tracking-wide opacity-80">Current badge</p>
             <p className="font-display text-xl font-bold">
               {currentBadge?.name ?? "Not yet earned"}
             </p>
           </div>
-          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur">
+          <div className="rounded-2xl bg-background/15 p-4 backdrop-blur transition-transform active:scale-95">
             <p className="text-xs uppercase tracking-wide opacity-80">Quizzes taken</p>
             <p className="font-display text-3xl font-bold">{data.attempts.length}</p>
           </div>
         </div>
       </section>
 
-      <Card>
+      {/* Progress Card */}
+      <Card className="transition-transform active:scale-[0.99]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-display text-lg font-semibold">Progress to next badge</h2>
           <Chip tone="primary">
-            <Flame className="size-3.5" />{" "}
+            <Flame className="size-3.5 animate-pulse" />{" "}
             {nextBadge ? `${nextBadge.min_xp - xp} XP to ${nextBadge.name}` : "All badges unlocked"}
           </Chip>
         </div>
         <Progress value={progressToNext} className="mt-4" />
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Quick Access Navigation Grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-cascade">
         {[
           {
             to: "/lessons",
@@ -128,9 +133,9 @@ function Dashboard() {
           },
           { to: "/leaderboard", icon: Trophy, title: "Leaderboard", body: "See where you rank" },
         ].map((item) => (
-          <Link key={item.to} to={item.to}>
-            <Card className="h-full transition-shadow hover:shadow-lift">
-              <item.icon className="size-6 text-primary" />
+          <Link key={item.to} to={item.to} className="block group">
+            <Card className="h-full interactive-card hover-lift transition-all duration-200 group-active:scale-95">
+              <item.icon className="size-6 text-primary transition-transform duration-200 group-hover:scale-110" />
               <p className="mt-4 font-semibold">{item.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
             </Card>
@@ -138,16 +143,21 @@ function Dashboard() {
         ))}
       </div>
 
+      {/* Badges and Quiz History */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="font-display text-lg font-semibold">Your badges</h2>
           <div className="mt-4 space-y-3">
-            {data.badges.map((badge) => {
+            {data.badges.map((badge, i) => {
               const earned = data.earned.has(badge.id);
               return (
                 <div
                   key={badge.id}
-                  className={`flex items-center gap-3 rounded-2xl border p-3 ${earned ? "border-primary/40 bg-primary-soft" : "border-border opacity-60"}`}
+                  style={{ animationDelay: `${i * 50}ms` }}
+                  className={`animate-cascade flex items-center gap-3 rounded-2xl border p-3 transition-all duration-200 active:scale-98 ${earned
+                      ? "border-primary/40 bg-primary-soft hover-lift"
+                      : "border-border opacity-60"
+                    }`}
                 >
                   <Award
                     className={`size-6 ${earned ? "text-primary" : "text-muted-foreground"}`}
@@ -169,14 +179,14 @@ function Dashboard() {
           <h2 className="font-display text-lg font-semibold">Recent quiz attempts</h2>
           {data.attempts.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              No attempts yet ? take your first quiz!
+              No attempts yet — take your first quiz!
             </p>
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-3 animate-cascade">
               {data.attempts.map((a) => (
                 <li
                   key={a.id}
-                  className="flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm"
+                  className="flex items-center justify-between rounded-2xl bg-muted px-4 py-3 text-sm transition-transform active:scale-98"
                 >
                   <span className="font-medium">{a.category}</span>
                   <span className="text-muted-foreground">
@@ -190,7 +200,7 @@ function Dashboard() {
             </ul>
           )}
           <Link to="/certificate" className="mt-5 block">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full active:scale-95 transition-transform">
               <Download className="size-4" /> Completion certificate
             </Button>
           </Link>
