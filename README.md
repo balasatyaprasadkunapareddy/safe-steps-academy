@@ -1,69 +1,116 @@
-# SafeSteps Learning Hub
+# 🚦 SafeSteps – Smart Traffic Safety Learning Platform
 
-SafeSteps – Smart Traffic Safety Learning Platform
+SafeSteps is a modern web application developed as part of a **Community Service Project (CSP)** to promote traffic safety awareness among school students. The platform provides interactive learning modules, quizzes, traffic sign education, badges, and teacher analytics to encourage safe road practices.
 
-Project Overview
+---
 
-Build a modern, production-ready web application called SafeSteps to improve traffic safety awareness among school students. The platform should provide interactive learning, quizzes, traffic sign education, badges, and progress tracking.
+## 📌 Project Objective
 
-The application should be responsive, easy to use, and suitable for deployment in schools as part of a community service initiative.
+The primary goal of SafeSteps is to educate students about traffic rules and road safety through an engaging digital platform. The application also enables teachers to monitor student learning progress and analyze traffic awareness survey results.
 
-Tech Stack
+---
 
-React + TypeScript
+## ✨ Features
 
-Tailwind CSS
+### 👨‍🎓 Student
+- Secure Login & Registration
+- Interactive Traffic Safety Lessons
+- Indian Traffic Sign Library
+- Quiz Module with Instant Feedback
+- Progress Tracking
+- Badge & Achievement System
+- Leaderboard
+- Completion Certificate
 
-Supabase (Authentication & Database)
+### 👩‍🏫 Teacher
+- Manage Students
+- Manage Lessons
+- Create & Manage Quizzes
+- View Student Progress
+- Survey Analytics Dashboard
+- Performance Reports
 
-React Router
+---
 
-Recharts (Analytics)
+## 📊 Community Service Survey
 
-Framer Motion (Animations)
+The platform includes a survey module to assess students' traffic awareness.
 
-User Roles
+Features include:
+- Awareness Score
+- Response Statistics
+- Pie Charts
+- Bar Charts
+- Overall Survey Analytics
 
-Student
+---
 
-Register/Login
+## 🛠️ Tech Stack
 
-Learn traffic safety lessons
+### Frontend
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
 
-View traffic signs
+### Backend
+- Supabase
 
-Attempt quizzes
+### Database
+- PostgreSQL (Supabase)
 
-Earn badges
+### Authentication
+- Supabase Authentication
 
-Track progress
+### Charts
+- Recharts
 
-View leaderboard
+### UI Components
+- shadcn/ui
+- Framer Motion
 
-Download completion certificate
+---
 
-Teacher
+## 📂 Project Structure
 
-Login
+```
+src/
+│
+├── components/
+├── routes/
+├── hooks/
+├── integrations/
+│   └── supabase/
+├── assets/
+├── lib/
+└── styles/
+```
 
-Manage students
+---
 
-Add/Edit/Delete lessons
+## 🚀 Installation
 
-Add/Edit/Delete quizzes
+Clone the repository:
 
-View student progress
+```bash
+git clone https://github.com/your-username/safe-steps-academy.git
+```
 
-View survey responses and analytics
+Move into the project:
 
-Manage badges
+```bash
+cd safe-steps-academy
+```
 
-Authentication
+Install dependencies:
 
-Implement a secure authentication system with:
+```bash
+npm install
+```
 
-Email & Password Login
+Run the development server:
 
+<<<<<<< HEAD
 Student Registration
 
 Protected Routes
@@ -236,5 +283,53 @@ Prefer working locally? You need Node.js and npm — [install with nvm](https://
 git clone <this-repository-url>
 cd <repository-name>
 npm i
+=======
+```bash
+>>>>>>> 5ed7c7a031e8b25bb7fd15179eb7b0adc40803eb
 npm run dev
 ```
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the project root and configure your Supabase project:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+---
+
+## 📈 Future Enhancements
+
+- AI Traffic Safety Assistant
+- Voice-Based Learning
+- Multi-language Support
+- Mobile Application
+- Push Notifications
+- Gamified Challenges
+
+---
+
+## 🎯 Project Outcomes
+
+- Improve traffic awareness among school students.
+- Encourage safe road behavior.
+- Provide teachers with analytical insights into student performance.
+- Digitize traffic safety education for schools.
+
+---
+
+## 👨‍💻 Developed By
+
+**Bala Satya Prasad K**  
+B.Tech – Artificial Intelligence & Machine Learning  
+SRKR Engineering College
+
+---
+
+## 📄 License
+
+This project is developed for educational and community service purposes.
