@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
+import { useAndroidBack } from "@/hooks/use-android-back";
+
 import appCss from "../styles.css?url";
 
 import { SessionProvider } from "@/hooks/use-session";
@@ -119,6 +121,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useAndroidBack();
 
   return (
     <QueryClientProvider client={queryClient}>
