@@ -147,14 +147,6 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 ---
 
-## 👨‍💻 Developed By
-
-**Bala Satya Prasad K**  
-B.Tech – Artificial Intelligence & Machine Learning  
-SRKR Engineering College
-
----
-
 ## 📄 License
 
 This project is developed for educational and community service purposes.
