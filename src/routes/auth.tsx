@@ -80,15 +80,25 @@ function AuthPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash.includes("type=recovery") || hash.includes("access_token")) {
+      const search = window.location.search;
+
+      if (hash.includes("type=recovery") || hash.includes("access_token") || search.includes("code=")) {
         setViewMode("reset");
+      }
+
+      if (hash.includes("error=")) {
+        const params = new URLSearchParams(hash.replace(/^#/, ""));
+        const desc = params.get("error_description");
+        if (desc) {
+          toast.error(decodeURIComponent(desc.replace(/\+/g, " ")));
+        }
       }
     }
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setViewMode("reset");
-        toast.info("Password recovery session verified. Please enter your new password.");
+        toast.info("Password recovery verified! Please enter your new password below.");
       }
     });
 
@@ -187,7 +197,14 @@ function AuthPage() {
 
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/auth?mode=reset`;
+      const isLocal =
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+      const baseOrigin = isLocal
+        ? window.location.origin
+        : "https://safe-steps-academy.vercel.app";
+      const redirectUrl = `${baseOrigin}/auth?mode=reset`;
+
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl,
       });
@@ -195,7 +212,7 @@ function AuthPage() {
       if (error) throw error;
 
       setResetEmailSent(true);
-      toast.success("Password reset instructions and verification code sent to your email!");
+      toast.success("Password reset email sent! Check your inbox.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not send password reset email");
     } finally {
@@ -328,7 +345,7 @@ function AuthPage() {
                   </div>
 
                   <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? "Sending reset instructions…" : "Send Reset Link & Code"}
+                    {loading ? "Sending reset email…" : "Send Password Reset Email"}
                   </Button>
                 </form>
               ) : (
@@ -337,31 +354,35 @@ function AuthPage() {
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="size-5 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-semibold text-primary">Instructions Sent!</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          We sent a reset link to <strong className="text-foreground">{form.email}</strong>.
-                          You can click the link in your email, or enter the 6-digit code below:
+                        <p className="text-sm font-semibold text-primary">Email Sent to {form.email}</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          Please open the email from SafeSteps and <strong>click the "Reset Password" link</strong> to open the password reset page directly.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <form onSubmit={onVerifyResetOtp} className="space-y-4">
-                    <div>
-                      <Label>6-Digit Verification Code</Label>
+                  <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Alternative: Enter 6-Digit OTP Code
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      If your reset email includes a 6-digit verification code, enter it below to set your password directly inside the app:
+                    </p>
+                    <form onSubmit={onVerifyResetOtp} className="space-y-3">
                       <Input
                         type="text"
                         maxLength={8}
-                        placeholder="Enter 6-digit code"
+                        placeholder="Enter 6-digit code (e.g. 123456)"
                         value={resetOtp}
                         onChange={(e) => setResetOtp(e.target.value)}
                       />
-                    </div>
 
-                    <Button type="submit" disabled={loading} className="w-full">
-                      {loading ? "Verifying code…" : "Verify Code & Set Password"}
-                    </Button>
-                  </form>
+                      <Button type="submit" disabled={loading} className="w-full">
+                        {loading ? "Verifying code…" : "Verify Code & Set Password"}
+                      </Button>
+                    </form>
+                  </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
                     <span>Didn't receive the email?</span>
@@ -370,7 +391,7 @@ function AuthPage() {
                       onClick={onForgotPassword}
                       className="font-semibold text-primary hover:underline cursor-pointer"
                     >
-                      Resend link
+                      Resend email
                     </button>
                   </div>
                 </div>
