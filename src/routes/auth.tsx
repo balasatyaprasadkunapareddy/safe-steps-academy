@@ -63,6 +63,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetOtp, setResetOtp] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
 
   const [form, setForm] = useState({
     email: "",
@@ -350,49 +351,55 @@ function AuthPage() {
                 </form>
               ) : (
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-primary/30 bg-primary-soft p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="size-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-primary">Email Sent to {form.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          Please open the email from SafeSteps and <strong>click the "Reset Password" link</strong> to open the password reset page directly.
-                        </p>
-                      </div>
+                  <div className="rounded-2xl border border-primary/30 bg-primary-soft p-5 text-center space-y-3">
+                    <div className="mx-auto grid size-12 place-items-center rounded-full bg-primary/20 text-primary">
+                      <Mail className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-foreground">Check your inbox</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        We sent a password reset link to:
+                      </p>
+                      <p className="font-semibold text-sm text-foreground mt-0.5">{form.email}</p>
+                    </div>
+                    <div className="rounded-xl bg-background/80 p-3 text-xs text-muted-foreground border border-border/60">
+                      👉 Click the <strong>Reset Password</strong> button inside the email to set your new password.
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Alternative: Enter 6-Digit OTP Code
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      If your reset email includes a 6-digit verification code, enter it below to set your password directly inside the app:
-                    </p>
-                    <form onSubmit={onVerifyResetOtp} className="space-y-3">
-                      <Input
-                        type="text"
-                        maxLength={8}
-                        placeholder="Enter 6-digit code (e.g. 123456)"
-                        value={resetOtp}
-                        onChange={(e) => setResetOtp(e.target.value)}
-                      />
+                  <div className="flex flex-col gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onForgotPassword}
+                      disabled={loading}
+                      className="w-full text-xs"
+                    >
+                      {loading ? "Sending…" : "Resend reset email"}
+                    </Button>
 
-                      <Button type="submit" disabled={loading} className="w-full">
-                        {loading ? "Verifying code…" : "Verify Code & Set Password"}
-                      </Button>
-                    </form>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-                    <span>Didn't receive the email?</span>
                     <button
                       type="button"
-                      onClick={onForgotPassword}
-                      className="font-semibold text-primary hover:underline cursor-pointer"
+                      onClick={() => setShowOtpInput(!showOtpInput)}
+                      className="text-xs text-muted-foreground hover:text-foreground text-center py-1 cursor-pointer"
                     >
-                      Resend email
+                      {showOtpInput ? "▲ Hide code input" : "▼ Have a 6-digit code instead?"}
                     </button>
+
+                    {showOtpInput && (
+                      <form onSubmit={onVerifyResetOtp} className="space-y-3 pt-2">
+                        <Input
+                          type="text"
+                          maxLength={8}
+                          placeholder="Enter 6-digit code"
+                          value={resetOtp}
+                          onChange={(e) => setResetOtp(e.target.value)}
+                        />
+                        <Button type="submit" disabled={loading} className="w-full">
+                          {loading ? "Verifying…" : "Verify Code & Set Password"}
+                        </Button>
+                      </form>
+                    )}
                   </div>
                 </div>
               )}
