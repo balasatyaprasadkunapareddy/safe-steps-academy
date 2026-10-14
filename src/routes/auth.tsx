@@ -1,6 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, KeyRound, Mail, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -60,6 +68,14 @@ function AuthPage() {
     return "signin";
   });
 
+  const [resetStatus, setResetStatus] = useState<
+    "idle" | "checking" | "ready" | "no_session" | "error"
+  >(() => {
+    if (mode === "reset") return "checking";
+    return "idle";
+  });
+  const [resetErrorMessage, setResetErrorMessage] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetOtp, setResetOtp] = useState("");
@@ -77,34 +93,138 @@ function AuthPage() {
     role: "student",
   });
 
-  // Check URL hash for Supabase password recovery token
+  // Inspect URL parameters, tokens, PKCE codes, and Supabase password recovery session
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+
+    let isMounted = true;
+
+    async function handleUrlTokens() {
       const hash = window.location.hash;
       const search = window.location.search;
+      const urlParams = new URLSearchParams(search);
+      const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
 
-      if (hash.includes("type=recovery") || hash.includes("access_token") || search.includes("code=")) {
-        setViewMode("reset");
+      // 1. Check for error parameters (e.g. from expired, cancelled, or duplicate links)
+      const errorDesc =
+        urlParams.get("error_description") || hashParams.get("error_description");
+      const errorMsg = urlParams.get("error") || hashParams.get("error");
+      if (errorDesc || errorMsg) {
+        const decoded = decodeURIComponent((errorDesc || errorMsg || "").replace(/\+/g, " "));
+        if (isMounted) {
+          setResetErrorMessage(decoded);
+          setResetStatus("error");
+          setViewMode("reset");
+        }
+        return;
       }
 
-      if (hash.includes("error=")) {
-        const params = new URLSearchParams(hash.replace(/^#/, ""));
-        const desc = params.get("error_description");
-        if (desc) {
-          toast.error(decodeURIComponent(desc.replace(/\+/g, " ")));
+      // 2. Check for PKCE auth code (?code=...)
+      const code = urlParams.get("code");
+      if (code) {
+        if (isMounted) {
+          setViewMode("reset");
+          setResetStatus("checking");
+        }
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("exchangeCodeForSession error:", error);
+            if (isMounted) {
+              setResetErrorMessage(error.message || "Password reset link is invalid or has expired.");
+              setResetStatus("error");
+            }
+          } else if (data?.session) {
+            if (isMounted) {
+              setResetStatus("ready");
+              setResetErrorMessage("");
+              toast.success("Password recovery verified! Enter your new password below.");
+            }
+          }
+        } catch (err: unknown) {
+          if (isMounted) {
+            setResetErrorMessage(
+              err instanceof Error ? err.message : "Failed to exchange reset code.",
+            );
+            setResetStatus("error");
+          }
+        }
+        return;
+      }
+
+      // 3. Check for implicit token in hash (#access_token=...&refresh_token=...)
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      if (accessToken && refreshToken) {
+        if (isMounted) {
+          setViewMode("reset");
+          setResetStatus("checking");
+        }
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            if (isMounted) {
+              setResetErrorMessage(error.message);
+              setResetStatus("error");
+            }
+          } else if (data?.session) {
+            if (isMounted) {
+              setResetStatus("ready");
+              setResetErrorMessage("");
+              toast.success("Password recovery session active! Enter your new password below.");
+            }
+          }
+        } catch (err: unknown) {
+          if (isMounted) {
+            setResetErrorMessage(
+              err instanceof Error ? err.message : "Failed to establish recovery session.",
+            );
+            setResetStatus("error");
+          }
+        }
+        return;
+      }
+
+      // 4. If URL mode is reset or hash has type=recovery, check existing session
+      if (mode === "reset" || hash.includes("type=recovery") || viewMode === "reset") {
+        if (isMounted) setResetStatus("checking");
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          if (isMounted) {
+            setResetStatus("ready");
+            setResetErrorMessage("");
+          }
+        } else {
+          if (isMounted) {
+            setResetStatus("no_session");
+            setResetErrorMessage(
+              "No active password reset session was found. Reset links are single-use and expire quickly.",
+            );
+          }
         }
       }
     }
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setViewMode("reset");
-        toast.info("Password recovery verified! Please enter your new password below.");
+    handleUrlTokens();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && viewMode === "reset")) {
+        if (session && isMounted) {
+          setViewMode("reset");
+          setResetStatus("ready");
+          setResetErrorMessage("");
+        }
       }
     });
 
-    return () => sub.subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [mode, viewMode]);
 
   // Redirect authenticated users (except when in reset password mode)
   useEffect(() => {
@@ -234,7 +354,7 @@ function AuthPage() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email: cleanEmail,
         token,
         type: "recovery",
@@ -242,6 +362,10 @@ function AuthPage() {
 
       if (error) throw error;
 
+      if (data?.session) {
+        setResetStatus("ready");
+        setResetErrorMessage("");
+      }
       toast.success("Verification code confirmed! You can now set your new password.");
       setViewMode("reset");
     } catch (error) {
@@ -267,6 +391,17 @@ function AuthPage() {
 
     setLoading(true);
     try {
+      // Pre-flight check: ensure active session exists
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setResetStatus("no_session");
+        setResetErrorMessage(
+          "Your password reset session has expired or is missing. Please request a fresh reset link.",
+        );
+        toast.error("Session expired or missing. Please request a new reset email.");
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: form.password,
       });
@@ -275,9 +410,28 @@ function AuthPage() {
 
       toast.success("Password changed successfully! You can now sign in with your new password.");
       setForm((prev) => ({ ...prev, password: "", confirm_password: "" }));
+
+      // Clean up session and URL
+      await supabase.auth.signOut();
+      if (typeof window !== "undefined") {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      setResetStatus("idle");
       setViewMode("signin");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update password");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Could not update password";
+      if (
+        message.toLowerCase().includes("session") ||
+        message.toLowerCase().includes("auth session missing")
+      ) {
+        setResetStatus("no_session");
+        setResetErrorMessage(
+          "Your password reset session has expired or is invalid. Please request a fresh reset link.",
+        );
+        toast.error("Reset session expired. Please request a fresh reset email.");
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -449,55 +603,133 @@ function AuthPage() {
             </div>
           )}
 
-          {/* View: Reset Password (New Password Input) */}
+          {/* View: Reset Password (New Password Input or Session Expired Card) */}
           {viewMode === "reset" && (
             <div className="space-y-6">
-              <div>
-                <h1 className="font-display text-2xl font-bold">Set New Password</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create a new secure password for your SafeSteps account.
-                </p>
-              </div>
-
-              <form onSubmit={onUpdateNewPassword} className="space-y-4">
-                <div>
-                  <Label>New Password</Label>
-                  <Input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="At least 6 characters"
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                  />
+              {resetStatus === "checking" ? (
+                <div className="rounded-2xl border border-border bg-card p-8 text-center space-y-4">
+                  <div className="flex justify-center">
+                    <Loader2 className="size-8 text-primary animate-spin" />
+                  </div>
+                  <h2 className="font-display text-xl font-bold">Verifying reset session…</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Please wait while we verify your password recovery link.
+                  </p>
                 </div>
+              ) : resetStatus === "error" || resetStatus === "no_session" ? (
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-left space-y-3">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="size-6 text-destructive shrink-0 mt-0.5" />
+                      <div>
+                        <h2 className="text-base font-bold text-destructive">
+                          Reset Link Expired or Session Missing
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {resetErrorMessage ||
+                            "Your password reset link has expired, was already used, or is invalid. For your security, reset links are single-use."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <Label>Confirm New Password</Label>
-                  <Input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Re-enter new password"
-                    value={form.confirm_password}
-                    onChange={(e) => update("confirm_password", e.target.value)}
-                  />
+                  <div className="rounded-2xl border border-border bg-card p-4 space-y-2 text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground">Why did this happen?</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Password reset links expire quickly for security reasons.</li>
+                      <li>Reset links can only be clicked once. If clicked multiple times, they expire.</li>
+                      <li>The link was generated before your Supabase Site URL was configured.</li>
+                    </ul>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setResetEmailSent(false);
+                      setResetStatus("idle");
+                      setViewMode("forgot");
+                      if (typeof window !== "undefined") {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    Request a Fresh Reset Link
+                  </Button>
+
+                  <div className="border-t border-border pt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetStatus("idle");
+                        setViewMode("signin");
+                        if (typeof window !== "undefined") {
+                          window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                      }}
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      ← Back to Sign in
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-3 border border-emerald-500/20">
+                      <CheckCircle2 className="size-3.5" />
+                      Recovery link verified
+                    </div>
+                    <h1 className="font-display text-2xl font-bold">Set New Password</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Create a new secure password for your SafeSteps account.
+                    </p>
+                  </div>
 
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? "Updating password…" : "Update Password"}
-                </Button>
-              </form>
+                  <form onSubmit={onUpdateNewPassword} className="space-y-4">
+                    <div>
+                      <Label>New Password</Label>
+                      <Input
+                        type="password"
+                        required
+                        minLength={6}
+                        placeholder="At least 6 characters"
+                        value={form.password}
+                        onChange={(e) => update("password", e.target.value)}
+                      />
+                    </div>
 
-              <div className="border-t border-border pt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("signin")}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                >
-                  Cancel and return to Sign in
-                </button>
-              </div>
+                    <div>
+                      <Label>Confirm New Password</Label>
+                      <Input
+                        type="password"
+                        required
+                        minLength={6}
+                        placeholder="Re-enter new password"
+                        value={form.confirm_password}
+                        onChange={(e) => update("confirm_password", e.target.value)}
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={loading} className="w-full">
+                      {loading ? "Updating password…" : "Update Password"}
+                    </Button>
+                  </form>
+
+                  <div className="border-t border-border pt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetStatus("idle");
+                        setViewMode("signin");
+                      }}
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      Cancel and return to Sign in
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
