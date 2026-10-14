@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { surveyQuestions } from "@/lib/safesteps";
+import { formatClassDisplay, matchClassAndSection } from "@/lib/schools";
 
 const CHART_COLORS = [
   "var(--color-chart-1)",
@@ -111,8 +112,8 @@ export async function getTeacherScope(
     if (school && !matchSchool(profileRow.school, school)) {
       return false;
     }
-    // 5. Match class (normalized) if configured
-    if (className && (normalizeClass(profileRow.class_name) !== normalizeClass(className))) {
+    // 5. Match class & section if configured
+    if (className && !matchClassAndSection(profileRow.class_name, className)) {
       return false;
     }
     return true;
@@ -241,7 +242,7 @@ function SurveyAnalyticsView({
   const classResponses = useMemo(() => {
     if (!currentClass) return schoolResponses;
     return schoolResponses.filter(
-      (r) => normalizeClass(r.className) === normalizeClass(currentClass),
+      (r) => matchClassAndSection(r.className, currentClass),
     );
   }, [schoolResponses, currentClass]);
 
@@ -261,7 +262,7 @@ function SurveyAnalyticsView({
         <TabsList>
           {hasClassOption && (
             <TabsTrigger value="class">
-              My Class ({currentClass}) [{classResponses.length}]
+              My Class ({formatClassDisplay(currentClass)}) [{classResponses.length}]
             </TabsTrigger>
           )}
           {hasSchoolOption && (
@@ -279,7 +280,7 @@ function SurveyAnalyticsView({
         <TabsContent value="class">
           <SurveyDashboardContent
             responses={classResponses}
-            scopeTitle={`Class ${currentClass} (${currentSchool || "Current School"})`}
+            scopeTitle={`${formatClassDisplay(currentClass)} (${currentSchool || "Current School"})`}
           />
         </TabsContent>
       )}
@@ -606,7 +607,7 @@ export function StudentTable() {
         title="No students found in your scope"
         hint={
           currentSchool || currentClass
-            ? `No registered students found for ${[currentSchool, currentClass && `Class ${currentClass}`].filter(Boolean).join(" · ")}.`
+            ? `No registered students found for ${[currentSchool, currentClass && formatClassDisplay(currentClass)].filter(Boolean).join(" · ")}.`
             : "Set your school and class in your profile to view students from your classroom."
         }
       />
@@ -712,7 +713,7 @@ export function StudentTable() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{student.class_name || "—"}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{formatClassDisplay(student.class_name) || "—"}</td>
                     <td className="px-5 py-3 font-bold text-primary">{student.xp ?? 0} XP</td>
                     <td className="px-5 py-3">
                       <span className="font-medium">{student.stats?.completedCount ?? 0}</span>

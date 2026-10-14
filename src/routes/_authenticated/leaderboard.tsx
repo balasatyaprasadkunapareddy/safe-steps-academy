@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { formatClassDisplay, matchClassAndSection } from "@/lib/schools";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
@@ -31,9 +32,6 @@ function LeaderboardPage() {
 
   const currentSchool = me?.profile?.school?.trim() ?? "";
   const currentClass = me?.profile?.class_name?.trim() ?? "";
-
-  const normalizeClass = (c?: string | null) =>
-    (c ?? "").trim().toLowerCase().replace(/^class\s+/i, "");
 
   const { data, isLoading } = useQuery({
     queryKey: ["leaderboard", currentSchool, currentClass, session?.user.id, me?.isTeacher],
@@ -94,7 +92,7 @@ function LeaderboardPage() {
     ? data.filter((p) => matchSchool(p.school, currentSchool))
     : data;
   const classList = currentClass
-    ? schoolList.filter((p) => normalizeClass(p.class_name) === normalizeClass(currentClass))
+    ? schoolList.filter((p) => matchClassAndSection(p.class_name, currentClass))
     : schoolList;
 
   const LeaderboardList = ({ list }: { list: typeof data }) => {
@@ -118,7 +116,7 @@ function LeaderboardPage() {
                   {isMe && <span className="text-xs text-primary">(you)</span>}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {[profile.school, profile.class_name && `Class ${profile.class_name}`]
+                  {[profile.school, profile.class_name && formatClassDisplay(profile.class_name)]
                     .filter(Boolean)
                     .join(" · ") || "—"}
                 </p>

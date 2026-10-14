@@ -9,7 +9,16 @@ import { BadgeManager, LessonManager, QuestionManager } from "@/components/teach
 import { Button, Card, EmptyState, Label, Select, Spinner } from "@/components/ui-kit";
 import { useProfile, useSession } from "@/hooks/use-session";
 import { ensureProfileAndRole } from "@/lib/profile";
-import { CLASSES, LOCATIONS, SCHOOLS, formatSchoolWithLocation } from "@/lib/schools";
+import {
+  CLASSES,
+  LOCATIONS,
+  SCHOOLS,
+  SECTIONS,
+  formatClassDisplay,
+  formatClassWithSection,
+  formatSchoolWithLocation,
+  parseClassAndSection,
+} from "@/lib/schools";
 
 export const Route = createFileRoute("/_authenticated/teacher")({
   head: () => ({
@@ -40,7 +49,16 @@ function TeacherPage() {
   const [editingBranch, setEditingBranch] = useState(false);
   const [selectedLoc, setSelectedLoc] = useState(LOCATIONS[0] as string);
   const [selectedSchool, setSelectedSchool] = useState(SCHOOLS[0] as string);
-  const [selectedClass, setSelectedClass] = useState("All Classes");
+
+  const initialClassState = me?.profile?.class_name
+    ? parseClassAndSection(me.profile.class_name)
+    : null;
+  const [selectedClass, setSelectedClass] = useState(
+    initialClassState ? initialClassState.className : "All Classes",
+  );
+  const [selectedSection, setSelectedSection] = useState(
+    initialClassState ? initialClassState.section : "All Sections",
+  );
   const [savingBranch, setSavingBranch] = useState(false);
 
   if (isLoading) return <Spinner label="Loading dashboard" />;
@@ -50,7 +68,7 @@ function TeacherPage() {
 
   const scopeLabel = [
     me.profile?.school,
-    me.profile?.class_name && `Class ${me.profile.class_name}`,
+    me.profile?.class_name && formatClassDisplay(me.profile.class_name),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -62,7 +80,12 @@ function TeacherPage() {
     setSavingBranch(true);
     try {
       const fullSchool = formatSchoolWithLocation(selectedSchool, selectedLoc);
-      const finalClass = selectedClass === "All Classes" ? "" : selectedClass;
+      const finalClass =
+        selectedClass === "All Classes"
+          ? ""
+          : selectedSection === "All Sections"
+            ? selectedClass
+            : formatClassWithSection(selectedClass, selectedSection);
 
       await ensureProfileAndRole(userId, {
         role: "teacher",
@@ -105,10 +128,10 @@ function TeacherPage() {
       </div>
 
       {editingBranch && (
-        <Card className="mt-4 p-4 space-y-4 max-w-xl border-primary/40 bg-card">
+        <Card className="mt-4 p-4 space-y-4 max-w-2xl border-primary/40 bg-card">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <h3 className="text-sm font-semibold flex items-center gap-2">
-              <School className="size-4 text-primary" /> Select School Branch
+              <School className="size-4 text-primary" /> Select School Branch & Class
             </h3>
             <button
               type="button"
@@ -119,7 +142,7 @@ function TeacherPage() {
             </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <Label>Location / Branch</Label>
               <Select
@@ -162,6 +185,23 @@ function TeacherPage() {
                 ))}
               </Select>
             </div>
+
+            {selectedClass !== "All Classes" && (
+              <div>
+                <Label>Section</Label>
+                <Select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                >
+                  <option value="All Sections">All Sections (A–E)</option>
+                  {SECTIONS.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-1">

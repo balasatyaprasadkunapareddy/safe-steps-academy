@@ -7,7 +7,14 @@ import { z } from "zod";
 import { Button, Card, Input, Label, Select } from "@/components/ui-kit";
 import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
-import { CLASSES, LOCATIONS, SCHOOLS, formatSchoolWithLocation } from "@/lib/schools";
+import {
+  CLASSES,
+  LOCATIONS,
+  SCHOOLS,
+  SECTIONS,
+  formatClassWithSection,
+  formatSchoolWithLocation,
+} from "@/lib/schools";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup", "forgot", "reset"]).optional(),
@@ -65,6 +72,7 @@ function AuthPage() {
     location: LOCATIONS[0] as string,
     school: SCHOOLS[0] as string,
     class_name: CLASSES[4] as string, // default: Class 10
+    section: SECTIONS[0] as string, // default: Section A
     role: "student",
   });
 
@@ -131,9 +139,10 @@ function AuthPage() {
     try {
       if (viewMode === "signup") {
         const fullSchoolName = formatSchoolWithLocation(form.school, form.location);
-        const selectedClass = form.role === "teacher" && form.class_name === "All Classes"
-          ? ""
-          : form.class_name.trim();
+        const selectedClass =
+          form.role === "teacher" && form.class_name === "All Classes"
+            ? ""
+            : formatClassWithSection(form.class_name, form.section);
 
         const { error } = await supabase.auth.signUp({
           email: parsed.data.email,
@@ -520,22 +529,43 @@ function AuthPage() {
                       </Select>
                     </div>
 
-                    {/* Class Select (Replacing text box!) */}
-                    <div>
-                      <Label>Class / Grade</Label>
-                      <Select
-                        value={form.class_name}
-                        onChange={(e) => update("class_name", e.target.value)}
-                      >
-                        {form.role === "teacher" && (
-                          <option value="All Classes">All Classes / Whole School</option>
-                        )}
-                        {CLASSES.map((cls) => (
-                          <option key={cls} value={cls}>
-                            {cls}
-                          </option>
-                        ))}
-                      </Select>
+                    {/* Class & Section Selects */}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <Label>Class / Grade</Label>
+                        <Select
+                          value={form.class_name}
+                          onChange={(e) => update("class_name", e.target.value)}
+                        >
+                          {form.role === "teacher" && (
+                            <option value="All Classes">All Classes / Whole School</option>
+                          )}
+                          {CLASSES.map((cls) => (
+                            <option key={cls} value={cls}>
+                              {cls}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+
+                      {form.class_name !== "All Classes" && (
+                        <div>
+                          <Label>Section</Label>
+                          <Select
+                            value={form.section}
+                            onChange={(e) => update("section", e.target.value)}
+                          >
+                            {form.role === "teacher" && (
+                              <option value="All Sections">All Sections (A–E)</option>
+                            )}
+                            {SECTIONS.map((sec) => (
+                              <option key={sec} value={sec}>
+                                {sec}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
+                      )}
                     </div>
 
                     <div>

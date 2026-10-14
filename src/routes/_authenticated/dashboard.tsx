@@ -8,7 +8,16 @@ import { Button, Card, Chip, Label, Progress, Select, Spinner } from "@/componen
 import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureProfileAndRole } from "@/lib/profile";
-import { CLASSES, LOCATIONS, SCHOOLS, formatSchoolWithLocation } from "@/lib/schools";
+import {
+  CLASSES,
+  LOCATIONS,
+  SCHOOLS,
+  SECTIONS,
+  formatClassDisplay,
+  formatClassWithSection,
+  formatSchoolWithLocation,
+  parseClassAndSection,
+} from "@/lib/schools";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -37,7 +46,10 @@ function Dashboard() {
   const [editingBranch, setEditingBranch] = useState(false);
   const [selectedLoc, setSelectedLoc] = useState(LOCATIONS[0] as string);
   const [selectedSchool, setSelectedSchool] = useState(SCHOOLS[0] as string);
-  const [selectedClass, setSelectedClass] = useState(CLASSES[4] as string);
+
+  const initialParsed = parseClassAndSection(me?.profile?.class_name);
+  const [selectedClass, setSelectedClass] = useState(initialParsed.className);
+  const [selectedSection, setSelectedSection] = useState(initialParsed.section);
   const [savingBranch, setSavingBranch] = useState(false);
 
   async function saveBranch() {
@@ -45,12 +57,13 @@ function Dashboard() {
     setSavingBranch(true);
     try {
       const fullSchool = formatSchoolWithLocation(selectedSchool, selectedLoc);
+      const fullClass = formatClassWithSection(selectedClass, selectedSection);
       await ensureProfileAndRole(userId, {
         role: "student",
         full_name: me?.profile?.full_name ?? "Student",
         school: fullSchool,
         location: selectedLoc,
-        class_name: selectedClass,
+        class_name: fullClass,
       });
       queryClient.invalidateQueries();
       toast.success("School branch updated successfully!");
@@ -110,7 +123,7 @@ function Dashboard() {
           <p>
             {me?.profile?.school ? `${me.profile.school} · ` : ""}
             {me?.profile?.class_name
-              ? `Class ${me.profile.class_name}`
+              ? formatClassDisplay(me.profile.class_name)
               : "Keep going — safety is a daily habit."}
           </p>
           <button
@@ -119,7 +132,7 @@ function Dashboard() {
             className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold hover:bg-white/30 transition-colors cursor-pointer"
           >
             <Edit3 className="size-3" />
-            {me?.profile?.school ? "Change branch" : "Set your school"}
+            {me?.profile?.school ? "Change branch / class" : "Set your school"}
           </button>
         </div>
 
@@ -127,7 +140,7 @@ function Dashboard() {
           <div className="mt-4 rounded-2xl bg-black/25 p-4 backdrop-blur text-card-foreground shadow-lift animate-slide-up">
             <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
               <span className="text-sm font-semibold flex items-center gap-2 text-white">
-                <School className="size-4" /> Select Your School & Branch Location
+                <School className="size-4" /> Select Your School, Branch & Section
               </span>
               <button
                 type="button"
@@ -138,7 +151,7 @@ function Dashboard() {
               </button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <Label className="text-white">Location / Branch</Label>
                 <Select
@@ -179,6 +192,21 @@ function Dashboard() {
                   {CLASSES.map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-white">Section</Label>
+                <Select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                  className="bg-background text-foreground"
+                >
+                  {SECTIONS.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
                     </option>
                   ))}
                 </Select>
