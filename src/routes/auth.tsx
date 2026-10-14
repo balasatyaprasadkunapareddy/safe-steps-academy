@@ -351,56 +351,86 @@ function AuthPage() {
                 </form>
               ) : (
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-primary/30 bg-primary-soft p-5 text-center space-y-3">
-                    <div className="mx-auto grid size-12 place-items-center rounded-full bg-primary/20 text-primary">
-                      <Mail className="size-6" />
+                  <div className="rounded-2xl border border-primary/30 bg-primary-soft p-5 text-left space-y-3">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="size-6 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-base font-bold text-primary">Check your email!</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          We sent a password reset link to <strong className="text-foreground">{form.email}</strong>.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-display text-lg font-bold text-foreground">Check your inbox</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        We sent a password reset link to:
-                      </p>
-                      <p className="font-semibold text-sm text-foreground mt-0.5">{form.email}</p>
+
+                    <div className="rounded-xl bg-background/80 p-3 text-xs text-muted-foreground space-y-1.5 border border-border/60">
+                      <p className="font-semibold text-foreground">How to reset:</p>
+                      <p>1. Open your inbox (or spam folder) for an email from <strong>SafeSteps / Supabase</strong>.</p>
+                      <p>2. Click the <strong>"Reset Password"</strong> link in the email.</p>
+                      <p>3. It will open SafeSteps directly to let you create your new password!</p>
                     </div>
-                    <div className="rounded-xl bg-background/80 p-3 text-xs text-muted-foreground border border-border/60">
-                      👉 Click the <strong>Reset Password</strong> button inside the email to set your new password.
+
+                    <div className="pt-1 flex items-center justify-between text-xs">
+                      <a
+                        href="https://mail.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                      >
+                        <Mail className="size-3.5" /> Open Gmail
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={onForgotPassword}
+                        className="font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        Resend email
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onForgotPassword}
-                      disabled={loading}
-                      className="w-full text-xs"
-                    >
-                      {loading ? "Sending…" : "Resend reset email"}
-                    </Button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowOtpInput(!showOtpInput)}
-                      className="text-xs text-muted-foreground hover:text-foreground text-center py-1 cursor-pointer"
-                    >
-                      {showOtpInput ? "▲ Hide code input" : "▼ Have a 6-digit code instead?"}
-                    </button>
-
-                    {showOtpInput && (
-                      <form onSubmit={onVerifyResetOtp} className="space-y-3 pt-2">
+                  {!showOtpInput ? (
+                    <div className="text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowOtpInput(true)}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      >
+                        Have a 6-digit OTP code instead? Click here
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-border bg-card p-4 space-y-3 animate-fade-in">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Enter 6-Digit OTP Code
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowOtpInput(false)}
+                          className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          Hide
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        If your email contains a 6-digit code, enter it below to set your password directly:
+                      </p>
+                      <form onSubmit={onVerifyResetOtp} className="space-y-3">
                         <Input
                           type="text"
                           maxLength={8}
-                          placeholder="Enter 6-digit code"
+                          placeholder="Enter 6-digit code (e.g. 123456)"
                           value={resetOtp}
                           onChange={(e) => setResetOtp(e.target.value)}
                         />
+
                         <Button type="submit" disabled={loading} className="w-full">
-                          {loading ? "Verifying…" : "Verify Code & Set Password"}
+                          {loading ? "Verifying code…" : "Verify Code & Set Password"}
                         </Button>
                       </form>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
