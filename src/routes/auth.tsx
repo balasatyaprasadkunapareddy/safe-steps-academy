@@ -71,7 +71,7 @@ function AuthPage() {
     full_name: "",
     location: LOCATIONS[0] as string,
     school: SCHOOLS[0] as string,
-    class_name: CLASSES[4] as string, // default: Class 10
+    class_name: CLASSES[5] as string, // default: Class 10
     section: SECTIONS[0] as string, // default: Section A
     role: "student",
   });

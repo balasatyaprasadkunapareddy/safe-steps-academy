@@ -30,13 +30,12 @@ export const SCHOOLS = [
 export type SchoolName = (typeof SCHOOLS)[number];
 
 export const CLASSES = [
+  "Class 5",
   "Class 6",
   "Class 7",
   "Class 8",
   "Class 9",
   "Class 10",
-  "Class 11",
-  "Class 12",
 ] as const;
 
 export type ClassName = (typeof CLASSES)[number];
@@ -85,10 +84,10 @@ export function formatClassWithSection(className: string, section?: string): str
  * Parses a combined class string into class and section
  */
 export function parseClassAndSection(combined?: string | null): { className: string; section: string } {
-  if (!combined) return { className: CLASSES[4], section: SECTIONS[0] };
+  if (!combined) return { className: CLASSES[5], section: SECTIONS[0] };
   const clean = combined.trim();
   const parts = clean.split(/\s*-\s*/);
-  const baseClass = parts[0]?.trim() || CLASSES[4];
+  const baseClass = parts[0]?.trim() || CLASSES[5];
   const secPart = parts[1]?.trim() || "";
 
   const matchedClass = CLASSES.find((c) => c.toLowerCase() === baseClass.toLowerCase()) || baseClass;
