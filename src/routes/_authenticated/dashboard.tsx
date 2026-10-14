@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Award, BookOpen, ClipboardList, Flame, SignpostBig, Trophy, Download } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Award, BookOpen, ClipboardList, Edit3, Flame, School, SignpostBig, Trophy, Download } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button, Card, Chip, Progress, Spinner } from "@/components/ui-kit";
+import { Button, Card, Chip, Label, Progress, Select, Spinner } from "@/components/ui-kit";
 import { useProfile, useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureProfileAndRole } from "@/lib/profile";
+import { CLASSES, LOCATIONS, SCHOOLS, formatSchoolWithLocation } from "@/lib/schools";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -25,9 +29,38 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const queryClient = useQueryClient();
   const { session } = useSession();
   const { data: me, isLoading } = useProfile();
   const userId = session?.user.id;
+
+  const [editingBranch, setEditingBranch] = useState(false);
+  const [selectedLoc, setSelectedLoc] = useState(LOCATIONS[0] as string);
+  const [selectedSchool, setSelectedSchool] = useState(SCHOOLS[0] as string);
+  const [selectedClass, setSelectedClass] = useState(CLASSES[4] as string);
+  const [savingBranch, setSavingBranch] = useState(false);
+
+  async function saveBranch() {
+    if (!userId) return;
+    setSavingBranch(true);
+    try {
+      const fullSchool = formatSchoolWithLocation(selectedSchool, selectedLoc);
+      await ensureProfileAndRole(userId, {
+        role: "student",
+        full_name: me?.profile?.full_name ?? "Student",
+        school: fullSchool,
+        location: selectedLoc,
+        class_name: selectedClass,
+      });
+      queryClient.invalidateQueries();
+      toast.success("School branch updated successfully!");
+      setEditingBranch(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update branch");
+    } finally {
+      setSavingBranch(false);
+    }
+  }
 
   const { data } = useQuery({
     queryKey: ["dashboard", userId],
@@ -73,12 +106,92 @@ function Dashboard() {
         <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
           {me?.profile?.full_name}
         </h1>
-        <p className="mt-2 text-sm opacity-90">
-          {me?.profile?.school ? `${me.profile.school} · ` : ""}
-          {me?.profile?.class_name
-            ? `Class ${me.profile.class_name}`
-            : "Keep going — safety is a daily habit."}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm opacity-90">
+          <p>
+            {me?.profile?.school ? `${me.profile.school} · ` : ""}
+            {me?.profile?.class_name
+              ? `Class ${me.profile.class_name}`
+              : "Keep going — safety is a daily habit."}
+          </p>
+          <button
+            type="button"
+            onClick={() => setEditingBranch(!editingBranch)}
+            className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold hover:bg-white/30 transition-colors cursor-pointer"
+          >
+            <Edit3 className="size-3" />
+            {me?.profile?.school ? "Change branch" : "Set your school"}
+          </button>
+        </div>
+
+        {editingBranch && (
+          <div className="mt-4 rounded-2xl bg-black/25 p-4 backdrop-blur text-card-foreground shadow-lift animate-slide-up">
+            <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
+              <span className="text-sm font-semibold flex items-center gap-2 text-white">
+                <School className="size-4" /> Select Your School & Branch Location
+              </span>
+              <button
+                type="button"
+                onClick={() => setEditingBranch(false)}
+                className="text-xs text-white/70 hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label className="text-white">Location / Branch</Label>
+                <Select
+                  value={selectedLoc}
+                  onChange={(e) => setSelectedLoc(e.target.value)}
+                  className="bg-background text-foreground"
+                >
+                  {LOCATIONS.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-white">School</Label>
+                <Select
+                  value={selectedSchool}
+                  onChange={(e) => setSelectedSchool(e.target.value)}
+                  className="bg-background text-foreground"
+                >
+                  {SCHOOLS.map((sch) => (
+                    <option key={sch} value={sch}>
+                      {sch}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-white">Class</Label>
+                <Select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="bg-background text-foreground"
+                >
+                  {CLASSES.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
+            <div className="mt-3 flex justify-end gap-2">
+              <Button size="sm" onClick={saveBranch} disabled={savingBranch}>
+                {savingBranch ? "Saving…" : "Save branch"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3 animate-cascade">
           <div className="rounded-2xl bg-background/15 p-4 backdrop-blur transition-transform active:scale-95">

@@ -1,11 +1,11 @@
-﻿import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button, Card, Chip, Input, Label, Select, Spinner, Textarea } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/hooks/use-session";
+import { useProfile, useSession } from "@/hooks/use-session";
 import { ensureProfileAndRole } from "@/lib/profile";
 
 type Lesson = {
@@ -47,6 +47,7 @@ const emptyQuestion = {
 };
 
 export function LessonManager() {
+  const { session } = useSession();
   const { data: me } = useProfile();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Lesson | null>(null);
@@ -77,15 +78,10 @@ export function LessonManager() {
   }
 
   async function save() {
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before saving lesson", err);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to manage lessons.");
+      return;
     }
 
     if (form.title.trim().length < 3 || form.summary.trim().length < 5) {
@@ -123,15 +119,10 @@ export function LessonManager() {
   }
 
   async function remove(id: string) {
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before deleting lesson", err);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to delete lessons.");
+      return;
     }
 
     const { error } = await supabase.from("lessons").delete().eq("id", id);
@@ -278,10 +269,12 @@ export function LessonManager() {
 
 export function QuestionManager() {
   const queryClient = useQueryClient();
+  const { session } = useSession();
   const { data: me } = useProfile();
   const [editing, setEditing] = useState<Question | null>(null);
   const [form, setForm] = useState<typeof emptyQuestion>({ ...emptyQuestion });
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["quiz-questions"],
@@ -299,55 +292,90 @@ export function QuestionManager() {
       return;
     }
 
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before saving question", err);
-    }
-
-    const payload = {
-      question: form.question.trim().slice(0, 300),
-      options,
-      correct_index: Math.min(form.correct_index, options.length - 1),
-      explanation: form.explanation.trim().slice(0, 500),
-      category: form.category.trim().slice(0, 40) || "General",
-    };
-
-    const { error } = editing
-      ? await supabase.from("quiz_questions").update(payload).eq("id", editing.id)
-      : await supabase.from("quiz_questions").insert(payload);
-    if (error) {
-      toast.error(error.message);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to create or update questions.");
       return;
     }
 
-    toast.success(editing ? "Question updated" : "Question added");
-    setOpen(false);
-    setEditing(null);
-    setForm({ ...emptyQuestion });
-    queryClient.invalidateQueries({ queryKey: ["quiz-questions"] });
+    setSaving(true);
+    try {
+      const payload = {
+        question: form.question.trim().slice(0, 300),
+        options,
+        correct_index: Math.min(form.correct_index, options.length - 1),
+        explanation: form.explanation.trim().slice(0, 500),
+        category: form.category.trim().slice(0, 40) || "General",
+      };
+
+      let result = editing
+        ? await supabase.from("quiz_questions").update(payload).eq("id", editing.id)
+        : await supabase.from("quiz_questions").insert(payload);
+
+      if (result.error) {
+        const isPermissionErr =
+          result.error.code === "42501" ||
+          result.error.message?.toLowerCase().includes("permission") ||
+          result.error.message?.toLowerCase().includes("policy");
+
+        if (isPermissionErr) {
+          // If the teacher role row needs synchronization in user_roles, attempt sync and retry once
+          if (me?.profile) {
+            await ensureProfileAndRole(userId, {
+              role: "teacher",
+              full_name: me.profile.full_name,
+              school: me.profile.school,
+              class_name: me.profile.class_name,
+            });
+            result = editing
+              ? await supabase.from("quiz_questions").update(payload).eq("id", editing.id)
+              : await supabase.from("quiz_questions").insert(payload);
+          }
+        }
+      }
+
+      if (result.error) {
+        const isPermissionErr =
+          result.error.code === "42501" ||
+          result.error.message?.toLowerCase().includes("permission") ||
+          result.error.message?.toLowerCase().includes("policy");
+
+        if (isPermissionErr) {
+          toast.error("Permission not allowed: Teacher access is required to create or modify questions.");
+        } else {
+          toast.error(result.error.message);
+        }
+        return;
+      }
+
+      toast.success(editing ? "Question updated" : "Question added");
+      setOpen(false);
+      setEditing(null);
+      setForm({ ...emptyQuestion });
+      queryClient.invalidateQueries({ queryKey: ["quiz-questions"] });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function remove(id: string) {
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before deleting question", err);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to delete questions.");
+      return;
     }
 
     const { error } = await supabase.from("quiz_questions").delete().eq("id", id);
     if (error) {
-      toast.error(error.message);
+      if (
+        error.code === "42501" ||
+        error.message?.toLowerCase().includes("permission") ||
+        error.message?.toLowerCase().includes("policy")
+      ) {
+        toast.error("Permission not allowed: Teacher access is required to delete questions.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
 
@@ -487,6 +515,7 @@ export function QuestionManager() {
 export function BadgeManager() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ name: "", description: "", min_xp: 0 });
+  const { session } = useSession();
   const { data: me } = useProfile();
 
   const { data } = useQuery({
@@ -499,15 +528,10 @@ export function BadgeManager() {
   });
 
   async function add() {
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before adding badge", err);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to add badges.");
+      return;
     }
 
     if (form.name.trim().length < 3) {
@@ -521,7 +545,11 @@ export function BadgeManager() {
       min_xp: Number(form.min_xp) || 0,
     });
     if (error) {
-      toast.error(error.message);
+      if (error.code === "42501" || error.message?.toLowerCase().includes("permission")) {
+        toast.error("Permission not allowed: Teacher access is required to add badges.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
 
@@ -531,20 +559,19 @@ export function BadgeManager() {
   }
 
   async function remove(id: string) {
-    try {
-      const userId = me?.profile?.id;
-      if (!userId) {
-        toast.error("Unable to verify teacher identity");
-        return;
-      }
-      await ensureProfileAndRole(userId, { role: "teacher" });
-    } catch (err) {
-      console.warn("Could not sync teacher role before deleting badge", err);
+    const userId = session?.user?.id ?? me?.profile?.id;
+    if (!userId) {
+      toast.error("You must be logged in as an authorized teacher to delete badges.");
+      return;
     }
 
     const { error } = await supabase.from("badges").delete().eq("id", id);
     if (error) {
-      toast.error(error.message);
+      if (error.code === "42501" || error.message?.toLowerCase().includes("permission")) {
+        toast.error("Permission not allowed: Teacher access is required to delete badges.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
 

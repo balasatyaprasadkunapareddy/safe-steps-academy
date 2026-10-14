@@ -1,4 +1,4 @@
-﻿import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 type RoleName = "student" | "teacher";
 
@@ -21,6 +21,7 @@ export async function ensureProfileAndRole(userId: string | undefined, metadata?
   const desiredRole = roleFromMetadata ?? "student";
 
   const fullName = normalizeText(metadata?.["full_name"]);
+  const location = normalizeText(metadata?.["location"]);
   const school = normalizeText(metadata?.["school"]);
   const className = normalizeText(metadata?.["class_name"]);
 
@@ -46,32 +47,43 @@ export async function ensureProfileAndRole(userId: string | undefined, metadata?
         full_name: string;
         school: string | null;
         class_name: string | null;
-      }> = {
-        full_name: fullName ?? profile.full_name ?? "Student",
-      };
+      }> = {};
 
-      if (school !== null) profileUpdate.school = school;
-      if (className !== null) profileUpdate.class_name = className;
+      if (fullName !== null && fullName !== undefined) {
+        profileUpdate.full_name = fullName;
+      }
+      if (school !== null && school !== undefined) {
+        profileUpdate.school = school;
+      }
+      if (className !== null && className !== undefined) {
+        profileUpdate.class_name = className;
+      }
 
-      const { error: profileUpdateError } = await supabase
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", userId);
-      if (profileUpdateError) throw profileUpdateError;
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: profileUpdateError } = await supabase
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", userId);
+        if (profileUpdateError) throw profileUpdateError;
+      }
     }
   } catch (profileError) {
     console.warn("[profile] Could not sync profile row", profileError);
   }
 
   try {
-    await supabase.auth.updateUser({
-      data: {
-        full_name: fullName ?? "Student",
-        school,
-        class_name: className,
-        role: desiredRole,
-      },
-    });
+    const authUpdate: Record<string, unknown> = {};
+    if (fullName !== null && fullName !== undefined) authUpdate["full_name"] = fullName;
+    if (location !== null && location !== undefined) authUpdate["location"] = location;
+    if (school !== null && school !== undefined) authUpdate["school"] = school;
+    if (className !== null && className !== undefined) authUpdate["class_name"] = className;
+    if (roleFromMetadata !== null) authUpdate["role"] = desiredRole;
+
+    if (Object.keys(authUpdate).length > 0) {
+      await supabase.auth.updateUser({
+        data: authUpdate,
+      });
+    }
   } catch (metadataError) {
     console.warn("[profile] Could not sync auth metadata", metadataError);
   }

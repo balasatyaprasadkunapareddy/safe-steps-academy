@@ -32,6 +32,9 @@ function LeaderboardPage() {
   const currentSchool = me?.profile?.school?.trim() ?? "";
   const currentClass = me?.profile?.class_name?.trim() ?? "";
 
+  const normalizeClass = (c?: string | null) =>
+    (c ?? "").trim().toLowerCase().replace(/^class\s+/i, "");
+
   const { data, isLoading } = useQuery({
     queryKey: ["leaderboard", currentSchool, currentClass, session?.user.id, me?.isTeacher],
     enabled: Boolean(session?.user.id),
@@ -46,23 +49,52 @@ function LeaderboardPage() {
 
       if (profilesRes.error) throw profilesRes.error;
 
+      const roleRows = rolesRes.data ?? [];
       const teacherIds = new Set(
-        (rolesRes.data ?? []).filter((r) => r.role === "teacher").map((r) => r.user_id),
+        roleRows.filter((r) => r.role === "teacher").map((r) => r.user_id),
+      );
+      const studentIds = new Set(
+        roleRows.filter((r) => r.role === "student").map((r) => r.user_id),
       );
 
-      // Exclude teachers from student leaderboard
-      return (profilesRes.data ?? []).filter((profile) => !teacherIds.has(profile.id));
+      // Current user is a teacher if metadata or roles indicate teacher
+      const currentIsTeacher =
+        Boolean(me?.isTeacher) ||
+        session?.user.user_metadata?.["role"] === "teacher" ||
+        (session?.user.id && teacherIds.has(session.user.id));
+
+      // Strictly include only students:
+      // 1. Must never be in teacherIds
+      // 2. If current user is a teacher, exclude them
+      // 3. If studentIds is available, prioritize users explicitly registered as students
+      return (profilesRes.data ?? []).filter((profile) => {
+        if (teacherIds.has(profile.id)) return false;
+        if (currentIsTeacher && profile.id === session?.user.id) return false;
+        if (studentIds.size > 0 && !studentIds.has(profile.id)) return false;
+        return true;
+      });
     },
   });
 
   if (isLoading) return <Spinner label="Loading leaderboard" />;
-  if (!data?.length) return <EmptyState title="No students found" hint="No student scores have been recorded yet." />;
+  if (!data?.length)
+    return <EmptyState title="No students found" hint="No student scores have been recorded yet." />;
+
+  const matchSchool = (a?: string | null, b?: string | null) => {
+    if (!a || !b) return false;
+    const cleanA = a.trim().toLowerCase();
+    const cleanB = b.trim().toLowerCase();
+    if (cleanA === cleanB) return true;
+    const baseA = cleanA.split(/\s*-\s*/)[0]?.trim();
+    const baseB = cleanB.split(/\s*-\s*/)[0]?.trim();
+    return cleanA === cleanB || (baseA && baseB && baseA === baseB);
+  };
 
   const schoolList = currentSchool
-    ? data.filter((p) => p.school?.trim().toLowerCase() === currentSchool.toLowerCase())
+    ? data.filter((p) => matchSchool(p.school, currentSchool))
     : data;
   const classList = currentClass
-    ? schoolList.filter((p) => p.class_name?.trim().toLowerCase() === currentClass.toLowerCase())
+    ? schoolList.filter((p) => normalizeClass(p.class_name) === normalizeClass(currentClass))
     : schoolList;
 
   const LeaderboardList = ({ list }: { list: typeof data }) => {
